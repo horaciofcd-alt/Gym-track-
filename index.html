@@ -524,16 +524,17 @@ function buildGym(){
     const isBodyweight=pesoRaw.includes('corporal')||pesoRaw==='s/p'||pesoRaw==='';
     const w=parseWeight(g(r,'peso','Peso'));
     const totalReps=parseInt(g(r,'cantidad total repeticiones','Cantidad total repeticiones','lad total repetic','total repeticiones','Total repeticiones'))||0;
+    const repsPerSeries=String(g(r,'repeticiones','Repeticiones')||'');
+    const series=parseInt(g(r,'series','Series'))||0;
     if(!ex)return;
     if(isBodyweight){
-      // PR = max total reps
       if(!prMap[ex]||totalReps>prMap[ex].reps){
-        prMap[ex]={w:null,reps:totalReps,muscle,fecha,isBodyweight:true};
+        prMap[ex]={w:null,reps:totalReps,series,repsPerSeries,muscle,fecha,isBodyweight:true};
       }
     } else {
       if(w===null)return;
       if(!prMap[ex]||w>prMap[ex].w){
-        prMap[ex]={w,reps:totalReps,muscle,fecha,isBodyweight:false};
+        prMap[ex]={w,reps:totalReps,series,repsPerSeries,muscle,fecha,isBodyweight:false};
       }
     }
   });
@@ -569,17 +570,47 @@ function buildGym(){
   },300);
 }
 
+function shouldUpgradeWeight(repsPerSeries,series){
+  if(!repsPerSeries||!series)return false;
+  const parts=String(repsPerSeries).split(';').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
+  if(!parts.length)return false;
+  // All series must be >= 12
+  return parts.length>=series && parts.every(r=>r>=12);
+}
+
+function prCardHTML(ex,data,col){
+  const {w,reps,series,repsPerSeries,fecha,isBodyweight:ib}=data;
+  const upgrade=!ib&&shouldUpgradeWeight(repsPerSeries,series);
+  const upgradeBadge=upgrade
+    ?'<div style="font-size:10px;font-weight:700;color:#0a0a0f;background:#c8f538;padding:2px 7px;border-radius:20px;margin-top:4px;display:inline-block">⬆ Subir peso</div>'
+    :'';
+  const seriesInfo=series?(series+'×'):'';
+  const repsDisplay=repsPerSeries||reps;
+  return '<div class="pr-card" style="border-color:'+col+'33'+(upgrade?';border-color:'+col+';box-shadow:0 0 8px '+col+'44':'')+';padding:10px 14px">'
+    +'<div class="pr-info" style="flex:1">'
+      +'<div class="pr-exercise">'+ex+'</div>'
+      +'<div class="pr-date">'+shortDate(fecha)+'</div>'
+    +'</div>'
+    +(ib
+      ?'<div style="text-align:right;flex-shrink:0"><div class="pr-weight" style="color:'+col+';font-size:20px">'+reps+'<span style="font-size:12px"> reps</span></div></div>'
+      :'<div style="text-align:right;flex-shrink:0">'
+        +'<div class="pr-weight" style="color:'+col+';font-size:20px">'+w+'<span style="font-size:12px"> kg</span></div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+seriesInfo+repsDisplay+'</div>'
+        +upgradeBadge
+      +'</div>')
+    +'</div>';
+}
+
 function renderPRs(list, grouped){
   const muscleColors={'Pecho':'#c8f538','Espalda':'#38c8f5','Hombros':'#f5a623','Pierna':'#f53860','Bíceps':'#a855f7','Tríceps':'#ec4899','Abdomen':'#14b8a6','Fuerza':'#f59e0b'};
   const muscleOrder=['Pecho','Espalda','Hombros','Pierna','Bíceps','Tríceps','Abdomen','Fuerza'];
 
   if(grouped){
-    // group by muscle
     const byMuscle={};
-    list.forEach(([ex,{w,muscle,fecha}])=>{
-      const m=muscle||'Otros';
+    list.forEach(([ex,data])=>{
+      const m=data.muscle||'Otros';
       if(!byMuscle[m])byMuscle[m]=[];
-      byMuscle[m].push({ex,w,fecha});
+      byMuscle[m].push({ex,...data});
     });
     const muscles=Object.keys(byMuscle).sort((a,b)=>{
       const ai=muscleOrder.indexOf(a),bi=muscleOrder.indexOf(b);
@@ -591,41 +622,27 @@ function renderPRs(list, grouped){
       const col=muscleColors[m]||'#c8f538';
       const exs=byMuscle[m].sort((a,b)=>a.ex.localeCompare(b.ex));
       const gid='mg-'+idx;
+      const upgradeCount=exs.filter(d=>!d.isBodyweight&&shouldUpgradeWeight(d.repsPerSeries,d.series)).length;
       return '<div>'
         +'<div class="muscle-group-header" data-gid="'+gid+'" onclick="toggleMuscleGroup(this.dataset.gid)">'
           +'<div style="display:flex;align-items:center;gap:8px">'
             +'<div class="muscle-group-title" style="color:'+col+'">'+m+'</div>'
             +'<div class="muscle-group-count">'+exs.length+' ejercicios</div>'
+            +(upgradeCount?'<div style="font-size:10px;font-weight:700;color:#0a0a0f;background:#c8f538;padding:2px 7px;border-radius:20px">⬆ '+upgradeCount+'</div>':'')
           +'</div>'
           +'<div class="muscle-group-chevron" id="chev-'+gid+'">▼</div>'
         +'</div>'
         +'<div class="muscle-group-body" id="'+gid+'">'
-        +exs.map(({ex,w,reps,fecha,isBodyweight:ib})=>'<div class="pr-card" style="border-color:'+col+'33;padding:10px 14px">'
-          +'<div class="pr-info" style="flex:1">'
-            +'<div class="pr-exercise">'+ex+'</div>'
-            +'<div class="pr-date">'+shortDate(fecha)+'</div>'
-          +'</div>'
-          +(ib
-            ?'<div class="pr-weight" style="color:'+col+';font-size:20px">'+reps+'<span style="font-size:12px"> reps</span></div>'
-            :'<div class="pr-weight" style="color:'+col+';font-size:20px">'+w+'<span style="font-size:12px"> kg</span></div>')
-          +'</div>').join('')
+        +exs.map(d=>prCardHTML(d.ex,d,col)).join('')
         +'</div>'
         +'</div>';
     }).join('');
     document.getElementById('prGrouped').style.display='block';
     document.getElementById('prGrid').style.display='none';
   } else {
-    // flat search results
-    document.getElementById('prGrid').innerHTML=list.map(([ex,{w,reps,muscle,fecha,isBodyweight:ib}])=>{
-      const col=muscleColors[muscle]||'#c8f538';
-      return '<div class="pr-card" style="border-color:'+col+'33">'
-        +'<div class="pr-info"><div class="pr-exercise">'+ex+'</div>'
-        +'<div class="pr-muscle">'+muscle+'</div>'
-        +'<div class="pr-date">'+shortDate(fecha)+'</div></div>'
-        +(ib
-          ?'<div class="pr-weight" style="color:'+col+'">'+reps+'<span style="font-size:13px"> reps</span></div>'
-          :'<div class="pr-weight" style="color:'+col+'">'+w+'<span style="font-size:13px"> kg</span></div>')
-        +'</div>';
+    document.getElementById('prGrid').innerHTML=list.map(([ex,data])=>{
+      const col=muscleColors[data.muscle]||'#c8f538';
+      return prCardHTML(ex,data,col);
     }).join('');
     document.getElementById('prGrouped').style.display='none';
     document.getElementById('prGrid').style.display='grid';
