@@ -642,6 +642,30 @@ function setTab(tab){
   else{document.querySelectorAll('.tab')[1].className='tab run';document.getElementById('runSec').classList.add('on');document.getElementById('dot').style.background='var(--run)';}
 }
 
+function normalize(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function showExSuggestions(val){
+  const box=document.getElementById('exSuggestions');
+  if(!val||val.length<2){box.style.display='none';return;}
+  const q=normalize(val);
+  const matches=[...new Set(gymData.map(r=>g(r,'ejercicio','Ejercicio')).filter(Boolean))]
+    .filter(ex=>normalize(ex).includes(q))
+    .sort((a,b)=>normalize(a).indexOf(q)-normalize(b).indexOf(q))
+    .slice(0,8);
+  if(!matches.length){box.style.display='none';return;}
+  box.innerHTML=matches.map(ex=>'<div onclick="pickEx(\''+ex.replace(/'/g,"\\'")+'\')" style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+ex+'</div>').join('');
+  box.style.display='block';
+}
+function pickEx(val){
+  document.getElementById('regEjercicio').value=val;
+  hideExSuggestions();
+  const match=gymData.slice().reverse().find(r=>normalize(g(r,'ejercicio','Ejercicio'))===normalize(val));
+  if(match){
+    const m=g(match,'grupo muscular','Grupo muscular');
+    if(m){const sel=document.getElementById('regGrupo');for(let o of sel.options){if(o.value===m||o.text===m){sel.value=o.value;break;}}}
+  }
+}
+function hideExSuggestions(){document.getElementById('exSuggestions').style.display='none';}
+
 async function loadAll(){
   document.getElementById('loading').style.display='flex';
   document.getElementById('gymSec').classList.remove('on');document.getElementById('runSec').classList.remove('on');
@@ -701,29 +725,6 @@ window.addEventListener('resize',()=>setTimeout(()=>{
   </div>
 </div>
 <script>
-function normalize(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
-function showExSuggestions(val){
-  const box=document.getElementById('exSuggestions');
-  if(!val||val.length<2){box.style.display='none';return;}
-  const q=normalize(val);
-  const matches=[...new Set(gymData.map(r=>g(r,'ejercicio','Ejercicio')).filter(Boolean))]
-    .filter(ex=>normalize(ex).includes(q))
-    .sort((a,b)=>normalize(a).indexOf(q)-normalize(b).indexOf(q))
-    .slice(0,8);
-  if(!matches.length){box.style.display='none';return;}
-  box.innerHTML=matches.map(ex=>'<div onclick="pickEx(\''+ex.replace(/'/g,"\\'")+'\')" style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+ex+'</div>').join('');
-  box.style.display='block';
-}
-function pickEx(val){
-  document.getElementById('regEjercicio').value=val;
-  hideExSuggestions();
-  const match=gymData.slice().reverse().find(r=>normalize(g(r,'ejercicio','Ejercicio'))===normalize(val));
-  if(match){
-    const m=g(match,'grupo muscular','Grupo muscular');
-    if(m)document.getElementById('regGrupo').value=m;
-  }
-}
-function hideExSuggestions(){document.getElementById('exSuggestions').style.display='none';}
 document.getElementById('regFecha').value=new Date().toISOString().slice(0,10);
 document.getElementById('regModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
