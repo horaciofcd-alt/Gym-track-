@@ -156,6 +156,7 @@ canvas{display:block;width:100%}
         <div class="dot" id="dot" style="background: var(--gym);"></div>
         <span id="statusTxt">Actualizado · 163 registros gym · 8 salidas</span>
         <button class="refresh" onclick="loadAll()">↻ Actualizar</button>
+        <button onclick="openModal()" style="background:var(--gym);color:#0a0a0f;border:none;padding:5px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;">+ Registrar</button>
       </div>
     </div>
   </header>
@@ -291,21 +292,108 @@ canvas{display:block;width:100%}
 </div>
 
 <script>
-const API='https://script.google.com/macros/s/AKfycbw1GUmIZrdiKofxjTuhxqo_BNIz4v5U0aWxBPAQCZEINuhWQBtEbVxsr81_GGppqiNH3w/exec';
+const SUPA_URL='https://jhtzbtxmxcptlbuyputk.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodHpidHhteGNwdGxidXlwdXRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTg5OTAsImV4cCI6MjA5NTU3NDk5MH0.JvjeWQPtt_kx7nlv5BRCsOzsQ4YDw22Y6u_AvoqJYIo';
 let gymData=[],runData=[],curTab='gym',allPRs=[];
 
-/* ── JSONP ── */
-function fetchSheet(sheet){
-  return new Promise((resolve,reject)=>{
-    const cb='_cb_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    const t=setTimeout(()=>{cleanup();reject(new Error('Timeout: '+sheet));},15000);
-    function cleanup(){try{delete window[cb];}catch(e){}try{s.remove();}catch(e){}}
-    window[cb]=(data)=>{clearTimeout(t);cleanup();resolve(Array.isArray(data)?data:[]);};
-    s.onerror=()=>{clearTimeout(t);cleanup();reject(new Error('Error de red'));};
-    s.src=API+'?sheet='+encodeURIComponent(sheet)+'&callback='+cb;
-    document.head.appendChild(s);
+/* ── Supabase fetch ── */
+async function fetchSheet(sheet){
+  const table=sheet==='Gym'?'entrenamientos':'running';
+  const res=await fetch(SUPA_URL+'/rest/v1/'+table+'?select=*&order=fecha.asc',{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
   });
+  if(!res.ok)throw new Error('Error al cargar '+sheet);
+  const data=await res.json();
+  // normalize keys to match existing g() calls
+  if(sheet==='Gym'){
+    return data.map(r=>({
+      'fecha':r.fecha,
+      'grupo muscular':r.grupo_muscular,
+      'ejercicio':r.ejercicio,
+      'peso':r.peso,
+      'series':r.series,
+      'repeticiones':r.repeticiones,
+      'lad total repetic':r.total_repeticiones,
+      'notas':r.notas,
+      'Peso corporal':r.peso_corporal
+    }));
+  }
+  return data;
+}
+
+/* ── Save to Supabase ── */
+async function saveEntrenamiento(row){
+  const res=await fetch(SUPA_URL+'/rest/v1/entrenamientos',{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify(row)
+  });
+  if(!res.ok){const err=await res.text();throw new Error(err);}
+}
+
+/* ── Modal form ── */
+function openModal(){document.getElementById('regModal').style.display='flex';}
+function closeModal(){document.getElementById('regModal').style.display='none';resetForm();}
+function resetForm(){
+  ['regFecha','regGrupo','regEjercicio','regPeso','regSeries','regReps','regPC','regNotas'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('regFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('regSetReps').innerHTML='';
+  document.getElementById('regMsg').textContent='';
+}
+
+function updateSetReps(){
+  const n=parseInt(document.getElementById('regSeries').value)||0;
+  const container=document.getElementById('regSetReps');
+  const existing=container.querySelectorAll('input');
+  const vals=Array.from(existing).map(i=>i.value);
+  container.innerHTML='';
+  for(let i=0;i<n;i++){
+    const inp=document.createElement('input');
+    inp.type='number';inp.min='1';inp.max='99';inp.placeholder='Serie '+(i+1);
+    inp.value=vals[i]||'';
+    inp.style.cssText='background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:14px;width:100%;font-family:DM Sans,sans-serif;';
+    container.appendChild(inp);
+  }
+}
+
+async function submitEntrenamiento(){
+  const fecha=document.getElementById('regFecha').value;
+  const grupo=document.getElementById('regGrupo').value.trim();
+  const ejercicio=document.getElementById('regEjercicio').value.trim();
+  const peso=document.getElementById('regPeso').value.trim();
+  const series=parseInt(document.getElementById('regSeries').value)||0;
+  const pc=document.getElementById('regPC').value.trim();
+  const notas=document.getElementById('regNotas').value.trim();
+  const setInputs=document.getElementById('regSetReps').querySelectorAll('input');
+  const repsArr=Array.from(setInputs).map(i=>i.value.trim()).filter(Boolean);
+
+  if(!fecha||!grupo||!ejercicio||!series){
+    document.getElementById('regMsg').textContent='Completá fecha, grupo, ejercicio y series.';
+    return;
+  }
+
+  const repsStr=repsArr.join(';');
+  const totalReps=repsArr.reduce((s,r)=>s+(parseInt(r)||0),0);
+
+  const btn=document.getElementById('regSubmitBtn');
+  btn.disabled=true;btn.textContent='Guardando...';
+  document.getElementById('regMsg').textContent='';
+
+  try{
+    await saveEntrenamiento({
+      fecha,grupo_muscular:grupo,ejercicio,peso:peso||null,
+      series,repeticiones:repsStr,total_repeticiones:totalReps,
+      notas:notas||null,peso_corporal:pc||null
+    });
+    document.getElementById('regMsg').style.color='var(--gym)';
+    document.getElementById('regMsg').textContent='✓ Guardado';
+    setTimeout(()=>{closeModal();loadAll();},800);
+  }catch(e){
+    document.getElementById('regMsg').style.color='var(--red)';
+    document.getElementById('regMsg').textContent='Error: '+e.message;
+  }finally{btn.disabled=false;btn.textContent='Guardar';}
 }
 
 /* ── Helpers ── */
@@ -919,4 +1007,55 @@ loadAll();
 </script>
 
 
+<!-- REGISTRO MODAL -->
+<div id="regModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gym)">Registrar entrenamiento</div>
+      <button onclick="closeModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Fecha</label>
+        <input id="regFecha" type="date" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Grupo muscular</label>
+        <select id="regGrupo" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+          <option value="">Seleccionar...</option>
+          <option>Pecho</option><option>Espalda</option><option>Hombros</option>
+          <option>Pierna</option><option>Bíceps</option><option>Tríceps</option>
+          <option>Abdomen</option><option>Fuerza</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Ejercicio</label>
+        <input id="regEjercicio" type="text" placeholder="Ej: Press banca" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Peso</label>
+        <input id="regPeso" type="text" placeholder="Ej: 80 kg / 175 lb / Corporal" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Series</label>
+        <input id="regSeries" type="number" min="1" max="10" placeholder="Nº de series" oninput="updateSetReps()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div id="regSetReps" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Peso corporal (kg)</label>
+        <input id="regPC" type="text" placeholder="Opcional" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Notas</label>
+        <input id="regNotas" type="text" placeholder="Opcional" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+      </div>
+      <div id="regMsg" style="font-size:13px;min-height:18px;color:var(--red);"></div>
+      <button id="regSubmitBtn" onclick="submitEntrenamiento()" style="background:var(--gym);color:#0a0a0f;border:none;padding:14px;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;width:100%;margin-top:4px;">Guardar</button>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('regFecha').value=new Date().toISOString().slice(0,10);
+document.getElementById('regModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
 </body></html>
