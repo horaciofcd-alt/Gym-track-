@@ -1028,9 +1028,10 @@ loadAll();
           <option>Abdomen</option><option>Fuerza</option>
         </select>
       </div>
-      <div>
+      <div style="position:relative">
         <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Ejercicio</label>
-        <input id="regEjercicio" type="text" placeholder="Ej: Press banca" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+        <input id="regEjercicio" type="text" placeholder="Ej: Press banca" autocomplete="off" oninput="showExSuggestions(this.value)" onblur="setTimeout(()=>hideExSuggestions(),150)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;">
+        <div id="exSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;z-index:100;max-height:180px;overflow-y:auto;margin-top:4px;"></div>
       </div>
       <div>
         <label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Peso</label>
@@ -1055,6 +1056,30 @@ loadAll();
   </div>
 </div>
 <script>
+function normalize(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function showExSuggestions(val){
+  const box=document.getElementById('exSuggestions');
+  if(!val||val.length<2){box.style.display='none';return;}
+  const q=normalize(val);
+  const matches=[...new Set(gymData.map(r=>g(r,'ejercicio','Ejercicio')).filter(Boolean))]
+    .filter(ex=>normalize(ex).includes(q))
+    .sort((a,b)=>normalize(a).indexOf(q)-normalize(b).indexOf(q))
+    .slice(0,8);
+  if(!matches.length){box.style.display='none';return;}
+  box.innerHTML=matches.map(ex=>'<div onclick="pickEx(\''+ex.replace(/'/g,"\\'")+'\')" style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+ex+'</div>').join('');
+  box.style.display='block';
+}
+function pickEx(val){
+  document.getElementById('regEjercicio').value=val;
+  hideExSuggestions();
+  // auto-fill grupo muscular from last entry of this exercise
+  const match=gymData.slice().reverse().find(r=>normalize(g(r,'ejercicio','Ejercicio'))===normalize(val));
+  if(match){
+    const m=g(match,'grupo muscular','Grupo muscular');
+    if(m)document.getElementById('regGrupo').value=m;
+  }
+}
+function hideExSuggestions(){document.getElementById('exSuggestions').style.display='none';}
 document.getElementById('regFecha').value=new Date().toISOString().slice(0,10);
 document.getElementById('regModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
