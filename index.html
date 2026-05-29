@@ -2,7 +2,7 @@
 <!-- saved from url=(0059)file:///C:/Users/Horacio%20Francisco/Downloads/index_2.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
 <title>My Training Board</title>
 <link href="./index_files/css2" rel="stylesheet">
 <style>
@@ -24,6 +24,11 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .statusbar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--gym);animation:pulse 2s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+body.light{--bg:#f5f5f7;--surface:#ffffff;--surface2:#ebebf0;--border:#d0d0dd;--text:#0a0a1f;--muted:#6b6b8a}
+.theme-switch{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--muted);display:flex;align-items:center;gap:6px;transition:all .2s}
+.theme-switch:hover{border-color:var(--gym);color:var(--text)}
+
 .refresh{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all .2s}
 .refresh:hover{color:var(--text);border-color:var(--gym)}
 
@@ -156,7 +161,8 @@ canvas{display:block;width:100%}
         <div class="dot" id="dot" style="background: var(--gym);"></div>
         <span id="statusTxt">Actualizado · 163 registros gym · 8 salidas</span>
         <button class="refresh" onclick="loadAll()">↻ Actualizar</button>
-        <button onclick="openModal()" style="background:var(--gym);color:#0a0a0f;border:none;padding:5px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;">+ Registrar</button>
+        <button onclick="curTab==='run'?openRunModal():openModal()" style="background:var(--gym);color:#0a0a0f;border:none;padding:5px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;">+ Registrar</button>
+        <button class="theme-switch" onclick="toggleTheme()" id="themeBtn">🌙 Oscuro</button>
       </div>
     </div>
   </header>
@@ -262,8 +268,8 @@ canvas{display:block;width:100%}
       <!-- 5. Peso corporal -->
       <div class="card">
         <div class="card-title" style="margin-bottom:20px">⚖️ Peso corporal (kg)</div>
-        <canvas id="cWeight" height="285" width="825" style="width: 550px; height: 190px;"></canvas>
-        <div id="weightTable" style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px"><div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px"><span style="color:var(--muted)">09/02</span><span style="color:var(--gym);font-weight:600;margin-left:8px">72.4 kg</span></div><div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px"><span style="color:var(--muted)">16/03</span><span style="color:var(--gym);font-weight:600;margin-left:8px">71.9 kg</span></div><div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px"><span style="color:var(--muted)">23/03</span><span style="color:var(--gym);font-weight:600;margin-left:8px">72.7 kg</span></div></div>
+        <canvas id="cWeight" height="120" width="825" style="width: 550px; height: 190px;"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -330,6 +336,49 @@ async function saveEntrenamiento(row){
     body:JSON.stringify(row)
   });
   if(!res.ok){const err=await res.text();throw new Error(err);}
+}
+
+
+async function saveRun(row){
+  const res=await fetch(SUPA_URL+'/rest/v1/running',{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify(row)
+  });
+  if(!res.ok){const err=await res.text();throw new Error(err);}
+}
+
+function openRunModal(){document.getElementById('runModal').style.display='flex';}
+function closeRunModal(){document.getElementById('runModal').style.display='none';resetRunForm();}
+function resetRunForm(){
+  ['runFecha','runDist','runTiempo','runPace','runFaster','runVO2','runNotas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('runFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('runMsg').textContent='';
+}
+async function submitRun(){
+  const fecha=document.getElementById('runFecha').value;
+  const dist=document.getElementById('runDist').value.trim();
+  const tiempo=document.getElementById('runTiempo').value.trim();
+  if(!fecha||!dist||!tiempo){document.getElementById('runMsg').textContent='Completá fecha, distancia y tiempo.';return;}
+  const btn=document.getElementById('runSubmitBtn');
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    await saveRun({
+      fecha,
+      distancia:dist,
+      tiempo,
+      pace_medio:document.getElementById('runPace').value.trim()||null,
+      pace_faster:document.getElementById('runFaster').value.trim()||null,
+      vo2_max:document.getElementById('runVO2').value.trim()||null,
+      notas:document.getElementById('runNotas').value.trim()||null
+    });
+    document.getElementById('runMsg').style.color='var(--run)';
+    document.getElementById('runMsg').textContent='✓ Guardado';
+    setTimeout(()=>{closeRunModal();loadAll();},800);
+  }catch(e){
+    document.getElementById('runMsg').style.color='var(--red)';
+    document.getElementById('runMsg').textContent='Error: '+e.message;
+  }finally{btn.disabled=false;btn.textContent='Guardar';}
 }
 
 function updateSetReps(){
@@ -945,6 +994,13 @@ function clearSearch(){
   document.getElementById('clearSearchBtn').style.display='none';
 }
 
+function toggleTheme(){
+  const isLight=document.body.classList.toggle('light');
+  document.getElementById('themeBtn').textContent=isLight?'🌙 Oscuro':'☀️ Claro';
+  localStorage.setItem('theme',isLight?'light':'dark');
+}
+(function(){if(localStorage.getItem('theme')==='light'){document.body.classList.add('light');document.getElementById('themeBtn').textContent='🌙 Oscuro';}})();
+
 /* ── Edit / Delete ── */
 let editingId=null;
 
@@ -1126,5 +1182,37 @@ loadAll();
 <script>
 document.getElementById('regFecha').value=new Date().toISOString().slice(0,10);
 document.getElementById('regModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
+
+<!-- RUN MODAL -->
+<div id="runModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--run)">Registrar salida</div>
+      <button onclick="closeRunModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Fecha</label>
+        <input id="runFecha" type="date" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Distancia</label>
+        <input id="runDist" type="text" placeholder="Ej: 10.5 km" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Tiempo</label>
+        <input id="runTiempo" type="text" placeholder="Ej: 52min / 1h10min" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Pace medio (min/km)</label>
+        <input id="runPace" type="text" placeholder="Ej: 6:02" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Pace más rápido</label>
+        <input id="runFaster" type="text" placeholder="Ej: 5:20" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">VO2 Max</label>
+        <input id="runVO2" type="number" placeholder="Ej: 52" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div><label style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px">Notas</label>
+        <input id="runNotas" type="text" placeholder="Opcional" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;"></div>
+      <div id="runMsg" style="font-size:13px;min-height:18px;"></div>
+      <button id="runSubmitBtn" onclick="submitRun()" style="background:var(--run);color:#0a0a0f;border:none;padding:14px;border-radius:12px;cursor:pointer;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;width:100%;">Guardar</button>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('runFecha').value=new Date().toISOString().slice(0,10);
+document.getElementById('runModal').addEventListener('click',function(e){if(e.target===this)closeRunModal();});
 </script>
 </body></html>
