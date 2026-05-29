@@ -73,14 +73,14 @@ body.light header{border-bottom:1px solid var(--border);padding-bottom:16px}
 }
 canvas{display:block;width:100%}
 .exercise-list{display:flex;flex-direction:column;gap:8px}
-.exercise-item{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:8px;padding:12px 14px;background:var(--surface2);border-radius:10px}
-.ex-name{font-size:14px;font-weight:500}.ex-item-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.ex-item-top>div:first-child{flex:1;min-width:0}
+.exercise-item{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--surface2);border-radius:10px;transition:background .15s}
+.ex-name{font-size:14px;font-weight:500}.exercise-item>div:first-child{flex:1;min-width:0}.ex-item-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .ex-muscle{font-size:11px;color:var(--muted);margin-top:2px}
-.ex-pill{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;text-align:center}
+.ex-pill{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;text-align:center;flex-shrink:0}
 .ex-series{background:rgba(167,139,250,0.1);color:var(--gym)}
 .ex-reps{background:rgba(255,255,255,0.05);color:var(--muted)}
 .ex-peso{background:rgba(245,166,35,0.12);color:var(--gold);min-width:70px}
-@media(max-width:600px){.exercise-item{grid-template-columns:1fr auto auto}.ex-reps{display:none}}
+@media(max-width:600px){.exercise-item{grid-template-columns:1fr auto auto}}
 .pr-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px}
 .pr-info{flex:1;min-width:0}
 .pr-exercise{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
