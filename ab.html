@@ -640,7 +640,7 @@ function searchByMuscle(muscle){
   const lastDate=dates[0];const rows=byDate[lastDate];
   document.getElementById('muscleSearchMeta').textContent='Última vez: '+fmtDate(lastDate)+' · '+dates.length+' sesiones totales';
   let html='<div class="exercise-list">';
-  html+=rows.map(r=>'<div class="exercise-item"><div><div class="ex-name">'+g(r,'ejercicio','Ejercicio')+'</div><div class="ex-muscle" style="color:'+col+'">'+g(r,'cantidad total repeticiones','lad total repetic','total repeticiones')+' reps totales</div></div><div class="ex-item-top"><div class="ex-pill ex-series">'+g(r,'series','Series')+' series</div><div class="ex-pill ex-reps">'+g(r,'repeticiones','Repeticiones')+'</div><div class="ex-pill ex-peso">'+(g(r,'peso','Peso')||'s/p')+'</div></div></div>').join('');
+  html+=rows.map(r=>'<div class="exercise-item"><div><div class="ex-name">'+g(r,'ejercicio','Ejercicio')+'</div><div class="ex-muscle">'+g(r,'grupo muscular','Grupo muscular')+'</div></div><div class="ex-item-top"><div class="ex-pill ex-series">'+g(r,'series','Series')+' series</div><div class="ex-pill ex-reps">'+g(r,'repeticiones','Repeticiones')+'</div><div class="ex-pill ex-peso">'+(g(r,'peso','Peso')||'s/p')+'</div></div></div>').join('');
   html+='</div>';
     document.getElementById('muscleSearchResults').innerHTML=html;
 }
