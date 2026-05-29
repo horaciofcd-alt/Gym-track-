@@ -217,13 +217,19 @@ canvas{display:block;width:100%}
       <div class="exercise-list" id="lastWorkoutList"></div>
   </div>
 
-    <!-- Músculo bars -->
-    <div class="card" id="mbarsCard">
-      <div class="card-title" style="margin-bottom:16px">💪 Volumen por grupo muscular</div>
-      <div id="mbars"></div>
+    <!-- Gráfico progresión PRs -->
+    <div class="card" id="prProgressCard">
+      <div class="card-title" style="margin-bottom:16px">📈 Progresión de PR por ejercicio</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="prProgMuscleBtns"></div>
+      <div style="margin-bottom:14px" id="prProgExContainer" style="display:none">
+        <select id="prProgExSelect" class="date-input" style="width:100%;max-width:320px">
+          <option value="">Seleccionar ejercicio...</option>
+        </select>
+      </div>
+      <div id="prProgChart" style="min-height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px">Seleccioná un grupo muscular</div>
     </div>
 
-    <!-- Peso corporal -->
+    <!-- Peso corporal (slim) -->
     <div class="card">
       <div class="card-title" style="margin-bottom:16px">⚖️ Peso corporal</div>
       <canvas id="cWeight" height="120"></canvas>
@@ -626,10 +632,7 @@ function buildGym(){
   const vols=dates.map(d=>byDate[d].reduce((s,r)=>s+(parseInt(g(r,'cantidad total repeticiones','lad total repetic','total repeticiones'))||0),0));
   const shortDates=dates.map(d=>shortDate(d));
 
-  // ── 4. Grupos musculares ──
-  const maxM=muscles[0]?.[1]||1;
-  document.getElementById('mbars').innerHTML=muscles.map(([n,c])=>`
-    <div class="mrow"><div class="mname">${n}</div><div class="mtrack"><div class="mfill" style="width:${(c/maxM*100).toFixed(0)}%"></div></div><div class="mcnt">${c}</div></div>`).join('');
+  // mbars removed
 
   // ── 5. Peso corporal ──
   // weight pills (no canvas, render immediately)
@@ -642,7 +645,7 @@ function buildGym(){
     return groups.slice(0,2).join('+');
   });
   setTimeout(()=>{
-    drawBar('cVol',shortDates,vols,'#c8f538',muscleLabels);
+    // cVol chart removed
     if(wV.length>=1)drawLine('cWeight',wD.map(d=>shortDate(d)),wV,'#c8f538');
     const wtEl=document.getElementById('weightTable');
     if(wtEl)wtEl.innerHTML=wD.map((d,i)=>'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px"><span style="color:var(--muted)">'+shortDate(d)+'</span><span style="color:var(--gym);font-weight:600;margin-left:8px">'+wV[i]+' kg</span></div>').join('');
@@ -795,6 +798,148 @@ function drawPaceSVG(id,labels,vals,color,vals2){
   
   svg+='</svg>';
   el.innerHTML=svg;
+}
+
+
+/* ── PR Progression Chart ── */
+function buildPrProgressBtns(){
+  const muscleColors={'Pecho':'#c8f538','Espalda':'#38c8f5','Hombros':'#f5a623','Pierna':'#f53860','Bíceps':'#a855f7','Tríceps':'#ec4899','Abdomen':'#14b8a6','Fuerza':'#f59e0b'};
+  const muscles=[...new Set(gymData.map(r=>g(r,'grupo muscular','Grupo muscular')).filter(Boolean))].sort();
+  const container=document.getElementById('prProgMuscleBtns');
+  if(!container)return;
+  container.innerHTML=muscles.map(m=>{
+    const col=muscleColors[m]||'#c8f538';
+    return `<button onclick="selectPrMuscle('${m}')" data-muscle="${m}" style="background:${col}18;border:1px solid ${col}44;color:${col};padding:6px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all .2s">${m}</button>`;
+  }).join('');
+}
+
+function selectPrMuscle(muscle){
+  // highlight active btn
+  document.querySelectorAll('#prProgMuscleBtns button').forEach(b=>{
+    b.style.opacity=b.dataset.muscle===muscle?'1':'0.5';
+    b.style.fontWeight=b.dataset.muscle===muscle?'700':'600';
+  });
+  // get exercises for this muscle that have multiple PR dates
+  const exData={};
+  gymData.forEach(r=>{
+    const m=g(r,'grupo muscular','Grupo muscular');
+    if(m!==muscle)return;
+    const ex=g(r,'ejercicio','Ejercicio');
+    const w=parseWeight(g(r,'peso','Peso'));
+    const fecha=g(r,'fecha','Fecha');
+    const reps=String(g(r,'repeticiones','Repeticiones')||'');
+    const series=parseInt(g(r,'series','Series'))||0;
+    if(!ex||w===null)return;
+    if(!exData[ex])exData[ex]=[];
+    exData[ex].push({fecha,w,reps,series});
+  });
+  // filter to exercises with at least 2 entries
+  const exList=Object.keys(exData).filter(ex=>exData[ex].length>=2).sort();
+  const sel=document.getElementById('prProgExSelect');
+  sel.innerHTML='<option value="">Seleccionar ejercicio...</option>'+exList.map(ex=>`<option value="${ex}">${ex}</option>`).join('');
+  document.getElementById('prProgExContainer').style.display='block';
+  document.getElementById('prProgChart').innerHTML='<span style="color:var(--muted);font-size:14px">Seleccioná un ejercicio</span>';
+  sel.onchange=()=>renderPrProgressChart(sel.value, exData[sel.value]||[], muscle);
+}
+
+function renderPrProgressChart(exName, entries, muscle){
+  const muscleColors={'Pecho':'#c8f538','Espalda':'#38c8f5','Hombros':'#f5a623','Pierna':'#f53860','Bíceps':'#a855f7','Tríceps':'#ec4899','Abdomen':'#14b8a6','Fuerza':'#f59e0b'};
+  const col=muscleColors[muscle]||'#c8f538';
+  if(!exName||!entries||!entries.length){
+    document.getElementById('prProgChart').innerHTML='<span style="color:var(--muted);font-size:14px">Seleccioná un ejercicio</span>';
+    return;
+  }
+  // Sort by date, track PR progression (only show points where weight increases)
+  const sorted=entries.slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const prPoints=[];
+  let maxW=0;
+  sorted.forEach(e=>{
+    if(e.w>maxW){maxW=e.w;prPoints.push(e);}
+    else if(e.w===maxW){
+      // same weight — update reps if better
+      const last=prPoints[prPoints.length-1];
+      if(last&&last.w===e.w)prPoints[prPoints.length-1]=e;
+    }
+  });
+  if(prPoints.length<1){
+    document.getElementById('prProgChart').innerHTML='<span style="color:var(--muted);font-size:14px">No hay progresión de PR para este ejercicio</span>';
+    return;
+  }
+
+  const W=document.getElementById('prProgChart').offsetWidth||400;
+  const H=220;
+  const pad={l:48,r:20,t:24,b:48};
+  const cW=W-pad.l-pad.r;
+  const cH=H-pad.t-pad.b;
+  const weights=prPoints.map(p=>p.w);
+  const minW=Math.min(...weights)*0.92;
+  const maxWv=Math.max(...weights)*1.05;
+  const n=prPoints.length;
+
+  function xPos(i){return pad.l+(i/(Math.max(n-1,1)))*cW;}
+  function yPos(w){return pad.t+cH-(((w-minW)/(maxWv-minW))*cH);}
+
+  // Build SVG
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;font-family:'DM Sans',sans-serif">`;
+  // grid lines
+  const ticks=4;
+  for(let i=0;i<=ticks;i++){
+    const y=pad.t+(i/ticks)*cH;
+    const val=(maxWv-(i/ticks)*(maxWv-minW)).toFixed(0);
+    svg+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+    svg+=`<text x="${pad.l-6}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="10">${val}</text>`;
+  }
+  // line
+  if(n>1){
+    const pts=prPoints.map((p,i)=>`${xPos(i)},${yPos(p.w)}`).join(' ');
+    svg+=`<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    // gradient fill
+    const fillPts=`${xPos(0)},${H-pad.b} ${pts} ${xPos(n-1)},${H-pad.b}`;
+    svg+=`<defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity="0.25"/><stop offset="100%" stop-color="${col}" stop-opacity="0.02"/></linearGradient></defs>`;
+    svg+=`<polygon points="${fillPts}" fill="url(#pg)"/>`;
+  }
+  // points + labels
+  prPoints.forEach((p,i)=>{
+    const x=xPos(i);const y=yPos(p.w);
+    const tooltip=`${p.w} kg\n${p.series}×${p.reps}\n${shortDate(p.fecha)}`;
+    svg+=`<g class="pr-dot" style="cursor:pointer">
+      <circle cx="${x}" cy="${y}" r="6" fill="${col}" stroke="var(--bg)" stroke-width="2"/>
+      <circle cx="${x}" cy="${y}" r="14" fill="transparent"/>
+      <title>${tooltip}</title>
+    </g>`;
+    // x label
+    svg+=`<text x="${x}" y="${H-pad.b+14}" text-anchor="middle" fill="var(--muted)" font-size="10" transform="rotate(-20,${x},${H-pad.b+14})">${shortDate(p.fecha)}</text>`;
+    // weight label above dot
+    svg+=`<text x="${x}" y="${y-10}" text-anchor="middle" fill="${col}" font-size="11" font-weight="700">${p.w}kg</text>`;
+  });
+  svg+='</svg>';
+
+  // Interactive tooltip overlay
+  const tooltipId='prtt_'+Date.now();
+  const chartHTML=`<div style="position:relative;overflow:visible">${svg}
+    <div id="${tooltipId}" style="display:none;position:fixed;background:var(--surface);border:1px solid ${col};border-radius:10px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:999;min-width:120px;box-shadow:0 4px 20px rgba(0,0,0,.4)"></div>
+  </div>`;
+  document.getElementById('prProgChart').innerHTML=chartHTML;
+
+  // Add hover events
+  document.querySelectorAll('#prProgChart .pr-dot').forEach((dot,i)=>{
+    const p=prPoints[i];
+    dot.addEventListener('mouseenter',(e)=>{
+      const tt=document.getElementById(tooltipId);
+      tt.innerHTML=`<div style="color:${col};font-weight:700;font-size:14px">${p.w} kg</div><div style="color:var(--muted);margin-top:4px">${p.series} series · ${p.reps}</div><div style="color:var(--muted)">${shortDate(p.fecha)}</div>`;
+      tt.style.display='block';
+      tt.style.left=(e.clientX+12)+'px';
+      tt.style.top=(e.clientY-40)+'px';
+    });
+    dot.addEventListener('mousemove',(e)=>{
+      const tt=document.getElementById(tooltipId);
+      tt.style.left=(e.clientX+12)+'px';
+      tt.style.top=(e.clientY-40)+'px';
+    });
+    dot.addEventListener('mouseleave',()=>{
+      document.getElementById(tooltipId).style.display='none';
+    });
+  });
 }
 
 function buildRun(){
@@ -1118,7 +1263,7 @@ async function loadAll(){
   document.getElementById('statusTxt').textContent='Cargando...';
   try{
     [gymData,runData]=await Promise.all([fetchSheet('Gym'),fetchSheet('Run')]);
-    buildGym();buildRun();buildMuscleFilterBtns();
+    buildGym();buildRun();buildMuscleFilterBtns();buildPrProgressBtns();
     document.getElementById('loading').style.display='none';
     document.getElementById('statusTxt').textContent='Actualizado · '+gymData.length+' registros gym · '+runData.length+' salidas';
     setTab(curTab);
