@@ -581,12 +581,14 @@ function buildGym(){
     const id=r['_id']||'';
     return `<div class="exercise-item">
       <div><div class="ex-name">${nombre}</div><div class="ex-muscle">${muscle}</div></div>
-      <div class="ex-pill ex-series">${series} series</div>
-      <div class="ex-pill ex-reps">${reps}</div>
-      <div class="ex-pill ex-peso">${peso||'s/p'}</div>
-      <div style="display:flex;gap:4px;margin-left:4px">
-        <button onclick="editRow('${id}')" title="Editar" class="btn-action btn-edit">✏</button>
-        <button onclick="deleteRow('${id}')" title="Eliminar" class="btn-action btn-del">✕</button>
+      <div class="ex-item-top">
+        <div class="ex-pill ex-series">${series} series</div>
+        <div class="ex-pill ex-reps">${reps}</div>
+        <div class="ex-pill ex-peso">${peso||'s/p'}</div>
+        <div style="display:flex;gap:4px;margin-left:auto">
+          <button onclick="editRow('${id}')" class="btn-action btn-edit">✏</button>
+          <button onclick="deleteRow('${id}')" class="btn-action btn-del">✕</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -923,12 +925,14 @@ function renderSearchResults(rows, title, subtitle){
     const id=r['_id']||'';
     return '<div class="exercise-item">'
       +'<div><div class="ex-name">'+nombre+'</div><div class="ex-muscle">'+muscle+'</div></div>'
-      +'<div class="ex-pill ex-series">'+series+' series</div>'
-      +'<div class="ex-pill ex-reps">'+reps+'</div>'
-      +'<div class="ex-pill ex-peso">'+(peso||'s/p')+'</div>'
-      +'<div style="display:flex;gap:4px;margin-left:4px">'
-        +'<button onclick="editRow(\''+id+'\')" title="Editar" class="btn-action btn-edit">✏</button>'
-        +'<button onclick="deleteRow(\''+id+'\')" title="Eliminar" class="btn-action btn-del">✕</button>'
+      +'<div class="ex-item-top">'
+        +'<div class="ex-pill ex-series">'+series+' series</div>'
+        +'<div class="ex-pill ex-reps">'+reps+'</div>'
+        +'<div class="ex-pill ex-peso">'+(peso||'s/p')+'</div>'
+        +'<div style="display:flex;gap:4px;margin-left:auto">'
+          +'<button onclick="editRow(\''+id+'\')" class="btn-action btn-edit">✏</button>'
+          +'<button onclick="deleteRow(\''+id+'\')" class="btn-action btn-del">✕</button>'
+        +'</div>'
       +'</div>'
       +'</div>';
   }).join('');
@@ -961,12 +965,14 @@ function searchByMuscle(muscle){
     const id=r['_id']||'';
     return '<div class="exercise-item">'
       +'<div><div class="ex-name">'+g(r,'ejercicio','Ejercicio')+'</div><div class="ex-muscle">'+g(r,'grupo muscular','Grupo muscular')+'</div></div>'
-      +'<div class="ex-pill ex-series">'+g(r,'series','Series')+' series</div>'
-      +'<div class="ex-pill ex-reps">'+g(r,'repeticiones','Repeticiones')+'</div>'
-      +'<div class="ex-pill ex-peso">'+(g(r,'peso','Peso')||'s/p')+'</div>'
-      +'<div style="display:flex;gap:4px;margin-left:4px">'
-        +'<button onclick="editRow(\''+id+'\')" class="btn-action btn-edit">✏</button>'
-        +'<button onclick="deleteRow(\''+id+'\')" class="btn-action btn-del">✕</button>'
+      +'<div class="ex-item-top">'
+        +'<div class="ex-pill ex-series">'+g(r,'series','Series')+' series</div>'
+        +'<div class="ex-pill ex-reps">'+g(r,'repeticiones','Repeticiones')+'</div>'
+        +'<div class="ex-pill ex-peso">'+(g(r,'peso','Peso')||'s/p')+'</div>'
+        +'<div style="display:flex;gap:4px;margin-left:auto">'
+          +'<button onclick="editRow(\''+id+'\')" class="btn-action btn-edit">✏</button>'
+          +'<button onclick="deleteRow(\''+id+'\')" class="btn-action btn-del">✕</button>'
+        +'</div>'
       +'</div>'
       +'</div>';
   }).join('');
