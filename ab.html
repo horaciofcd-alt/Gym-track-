@@ -208,7 +208,7 @@ let gymData=[],runData=[],curTab='gym',allPRs=[];
 
 async function fetchSheet(sheet){
   const table=sheet==='Gym'?'ab_entrenamientos':'ab_running';
-  const res=await fetch(SUPA_URL+'/rest/v1/'+table+'?select=*&order=fecha.asc',{
+  const res=await fetch(SUPA_URL+'/rest/v1/'+table+'?select=*&order=fecha.asc&limit=2000',{
     headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
   });
   if(!res.ok)throw new Error('Error al cargar '+sheet);
