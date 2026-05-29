@@ -196,6 +196,7 @@ async function fetchSheet(sheet){
   const data=await res.json();
   if(sheet==='Gym'){
     return data.map(r=>({
+      '_id':r.id,
       'fecha':r.fecha,
       'grupo muscular':r.grupo_muscular,
       'ejercicio':r.ejercicio,
@@ -450,7 +451,12 @@ function buildGym(){
     const series=g(r,'series','Series');
     const reps=g(r,'repeticiones','Repeticiones');
     const peso=g(r,'peso','Peso');
-    return '<div class="exercise-item"><div><div class="ex-name">'+nombre+'</div><div class="ex-muscle">'+muscle+'</div></div><div class="ex-pill ex-series">'+series+' series</div><div class="ex-pill ex-reps">'+reps+'</div><div class="ex-pill ex-peso">'+(peso||'s/p')+'</div></div>';
+    const id=r['_id']||'';
+    return '<div class="exercise-item"><div><div class="ex-name">'+nombre+'</div><div class="ex-muscle">'+muscle+'</div></div><div class="ex-pill ex-series">'+series+' series</div><div class="ex-pill ex-reps">'+reps+'</div><div class="ex-pill ex-peso">'+(peso||'s/p')+'</div>'
+      +'<div style="display:flex;gap:4px;margin-left:4px">'
+      +'<button onclick="editRow(\''+id+'\')" title="Editar" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:13px;">✏️</button>'
+      +'<button onclick="deleteRow(\''+id+'\')" title="Eliminar" style="background:var(--surface2);border:1px solid var(--border);color:var(--red);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:13px;">🗑</button>'
+      +'</div></div>';
   }).join('');
 
   const prMap={};
@@ -640,6 +646,88 @@ function setTab(tab){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));
   if(tab==='gym'){document.querySelectorAll('.tab')[0].className='tab gym';document.getElementById('gymSec').classList.add('on');document.getElementById('dot').style.background='var(--gym)';}
   else{document.querySelectorAll('.tab')[1].className='tab run';document.getElementById('runSec').classList.add('on');document.getElementById('dot').style.background='var(--run)';}
+}
+
+/* ── Edit / Delete ── */
+let editingId=null;
+
+async function deleteRow(id){
+  if(!id)return;
+  if(!confirm('¿Eliminar este ejercicio?'))return;
+  const res=await fetch(SUPA_URL+'/rest/v1/ab_entrenamientos?id=eq.'+id,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  if(res.ok)loadAll();
+  else alert('Error al eliminar');
+}
+
+function editRow(id){
+  if(!id)return;
+  const r=gymData.find(r=>r['_id']===id);
+  if(!r)return;
+  editingId=id;
+  document.getElementById('regFecha').value=g(r,'fecha','Fecha')||new Date().toISOString().slice(0,10);
+  document.getElementById('regGrupo').value=g(r,'grupo muscular','Grupo muscular')||'';
+  document.getElementById('regEjercicio').value=g(r,'ejercicio','Ejercicio')||'';
+  document.getElementById('regPeso').value=g(r,'peso','Peso')||'';
+  document.getElementById('regSeries').value=g(r,'series','Series')||'';
+  document.getElementById('regPC').value=g(r,'Peso corporal','peso corporal')||'';
+  document.getElementById('regNotas').value=g(r,'notas','Notas')||'';
+  updateSetReps();
+  const repsArr=String(g(r,'repeticiones','Repeticiones')||'').split(';');
+  const inputs=document.getElementById('regSetReps').querySelectorAll('input');
+  inputs.forEach((inp,i)=>{if(repsArr[i])inp.value=repsArr[i].trim();});
+  document.getElementById('regSubmitBtn').textContent='Actualizar';
+  openModal();
+}
+
+async function submitEntrenamiento(){
+  const fecha=document.getElementById('regFecha').value;
+  const grupo=document.getElementById('regGrupo').value.trim();
+  const ejercicio=document.getElementById('regEjercicio').value.trim();
+  const peso=document.getElementById('regPeso').value.trim();
+  const series=parseInt(document.getElementById('regSeries').value)||0;
+  const pc=document.getElementById('regPC').value.trim();
+  const notas=document.getElementById('regNotas').value.trim();
+  const repsArr=Array.from(document.getElementById('regSetReps').querySelectorAll('input')).map(i=>i.value.trim()).filter(Boolean);
+  if(!fecha||!grupo||!ejercicio||!series){document.getElementById('regMsg').textContent='Completá fecha, grupo, ejercicio y series.';return;}
+  const repsStr=repsArr.join(';');
+  const totalReps=repsArr.reduce((s,r)=>s+(parseInt(r)||0),0);
+  const btn=document.getElementById('regSubmitBtn');
+  btn.disabled=true;btn.textContent='Guardando...';
+  document.getElementById('regMsg').textContent='';
+  const payload={fecha,grupo_muscular:grupo,ejercicio,peso:peso||null,series,repeticiones:repsStr,total_repeticiones:totalReps,notas:notas||null,peso_corporal:pc||null};
+  try{
+    if(editingId){
+      const res=await fetch(SUPA_URL+'/rest/v1/ab_entrenamientos?id=eq.'+editingId,{
+        method:'PATCH',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(payload)
+      });
+      if(!res.ok)throw new Error(await res.text());
+    } else {
+      await saveEntrenamiento(payload);
+    }
+    document.getElementById('regMsg').style.color='var(--gym)';
+    document.getElementById('regMsg').textContent='✓ Guardado';
+    editingId=null;
+    setTimeout(()=>{closeModal();loadAll();},800);
+  }catch(e){
+    document.getElementById('regMsg').style.color='var(--red)';
+    document.getElementById('regMsg').textContent='Error: '+e.message;
+  }finally{btn.disabled=false;btn.textContent=editingId?'Actualizar':'Guardar';}
+}
+
+function openModal(){document.getElementById('regModal').style.display='flex';}
+function closeModal(){document.getElementById('regModal').style.display='none';resetForm();}
+function resetForm(){
+  ['regFecha','regGrupo','regEjercicio','regPeso','regSeries','regPC','regNotas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('regFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('regSetReps').innerHTML='';
+  document.getElementById('regMsg').textContent='';
+  document.getElementById('regSubmitBtn').textContent='Guardar';
+  editingId=null;
 }
 
 function normalize(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
