@@ -6,170 +6,303 @@
 <title>My Training Board</title>
 <link href="./index_files/css2" rel="stylesheet">
 <style>
-:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c28;--border:#2a2a3d;--gym:#c8f538;--run:#38c8f5;--gym-dim:rgba(200,245,56,0.12);--run-dim:rgba(56,200,245,0.12);--text:#f0f0f8;--muted:#6b6b8a;--red:#f53860;--gold:#f5a623}
+:root{
+  --bg:#07080f;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --surface3:rgba(255,255,255,0.10);
+  --border:rgba(255,255,255,0.09);
+  --border2:rgba(255,255,255,0.14);
+  --gym:#3b82f6;
+  --gym2:#60a5fa;
+  --run:#ef4444;
+  --run2:#f87171;
+  --gym-dim:rgba(59,130,246,0.12);
+  --run-dim:rgba(239,68,68,0.12);
+  --text:#f0f2ff;
+  --muted:rgba(180,185,220,0.55);
+  --red:#ef4444;
+  --gold:#f59e0b;
+  --glass:rgba(255,255,255,0.04);
+  --glass-border:rgba(255,255,255,0.10);
+  --glow-blue:rgba(59,130,246,0.20);
+  --glow-red:rgba(239,68,68,0.20);
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;max-width:100vw}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(200,245,56,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(200,245,56,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-.wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:36px 24px}
+
+/* Ambient background */
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 80% 50% at 20% -10%,rgba(59,130,246,0.12) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 40% at 80% 110%,rgba(239,68,68,0.10) 0%,transparent 60%),
+  radial-gradient(ellipse 40% 30% at 50% 50%,rgba(99,102,241,0.04) 0%,transparent 70%);
+  pointer-events:none;z-index:0}
+
+/* Subtle grid */
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* SIDEBAR LAYOUT */
+.app-shell{display:flex;min-height:100vh;position:relative;z-index:1}
+.sidebar{width:220px;flex-shrink:0;background:rgba(255,255,255,0.025);border-right:1px solid var(--glass-border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:28px 0;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;letter-spacing:2px;padding:0 20px 28px;border-bottom:1px solid var(--glass-border);margin-bottom:8px}
+.sidebar-logo span{background:linear-gradient(135deg,var(--gym),var(--gym2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s;border-radius:0;position:relative;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.nav-item.active{color:var(--gym);background:rgba(59,130,246,0.08)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:linear-gradient(180deg,var(--gym),var(--gym2));border-radius:0 4px 4px 0}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-section{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:16px 20px 6px;opacity:0.5}
+
+.sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid var(--glass-border)}
+.body-stats{display:flex;flex-direction:column;gap:6px}
+.body-stat-row{display:flex;justify-content:space-between;align-items:center}
+.body-stat-label{font-size:10px;color:var(--muted);letter-spacing:0.5px}
+.body-stat-val{font-size:13px;font-weight:700;color:var(--text)}
+
+.main-content{flex:1;min-width:0;padding:32px 28px;overflow-x:hidden}
 
 /* HEADER */
-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:36px;flex-wrap:wrap;gap:16px}
-.logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,68px);line-height:.9;letter-spacing:2px}
-.logo span{color:var(--gym)}
-.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.tabs{display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px}
-.tab{padding:9px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif}
-.tab.gym{background:var(--gym-dim);color:var(--gym)}
-.tab.run{background:var(--run-dim);color:var(--run)}
-.statusbar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--gym);animation:pulse 2s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px}
+.top-bar-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,3vw,32px);letter-spacing:1px;color:var(--text)}
+.top-bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:12px;padding:4px;backdrop-filter:blur(10px)}
+.tab{padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;transition:all .2s;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0.5px}
+.tab.gym{background:linear-gradient(135deg,rgba(59,130,246,0.25),rgba(96,165,250,0.15));color:var(--gym);box-shadow:0 0 20px rgba(59,130,246,0.15)}
+.tab.run{background:linear-gradient(135deg,rgba(239,68,68,0.25),rgba(248,113,113,0.15));color:var(--run);box-shadow:0 0 20px rgba(239,68,68,0.15)}
+.statusbar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gym);animation:pulse 2s infinite;flex-shrink:0;box-shadow:0 0 8px var(--gym)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(0.8)}}
 
-body.light{--bg:#eef0f4;--surface:#ffffff;--surface2:#e2e5ec;--border:#c0c4d0;--text:#0d0d1f;--muted:#4a4a6a;--gym:#5a9e00;--gold:#b87000}
-body.light .card-title{color:#1a1a3a}
-body.light .stat-label{color:#3a3a5a}
-body.light .logo span{color:#5a9e00}
-body.light .workout-date{color:#5a9e00}
-body.light .ex-series{background:rgba(90,158,0,0.12);color:#4a8a00}
-body.light .ex-reps{background:rgba(0,0,0,0.06);color:#3a3a5a}
-body.light .ex-peso{background:rgba(184,112,0,0.12);color:#8a5a00}
-body.light .mfill{background:#5a9e00}
-body.light .pr-weight{color:#5a9e00}
-body.light header{border-bottom:1px solid var(--border);padding-bottom:16px}
-.theme-switch{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--muted);display:flex;align-items:center;gap:6px;transition:all .2s}
+/* GLASS BUTTON */
+.btn-glass{background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);color:var(--muted);padding:7px 14px;border-radius:10px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all .2s;backdrop-filter:blur(10px);font-weight:500}
+.btn-glass:hover{background:rgba(255,255,255,0.10);color:var(--text);border-color:rgba(255,255,255,0.2)}
+.refresh{background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);color:var(--muted);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all .2s}
+.refresh:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+.theme-switch{background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:20px;padding:5px 12px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--muted);display:flex;align-items:center;gap:6px;transition:all .2s;backdrop-filter:blur(10px)}
 .theme-switch:hover{border-color:var(--gym);color:var(--text)}
-
-.refresh{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all .2s}
-.refresh:hover{color:var(--text);border-color:var(--gym)}
 
 /* LAYOUT */
 .section{display:none}.section.on{display:block}
 .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:20px;color:var(--muted)}
-.spinner{width:38px;height:38px;border:2px solid var(--border);border-top-color:var(--gym);border-radius:50%;animation:spin .8s linear infinite}
+.spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--gym);border-radius:50%;animation:spin .7s linear infinite;box-shadow:0 0 16px rgba(59,130,246,0.3)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.btn-action{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:border-color .15s,color .15s}
+.btn-action{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s}
 .btn-edit:hover{border-color:var(--gym);color:var(--gym)}
 .btn-del:hover{border-color:var(--red);color:var(--red)}
 
-
 /* TOP STATS */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden}
-.stat::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;transform:translate(20px,-20px)}
-.stat.g::after{background:var(--gym-dim)}
-.stat.r::after{background:var(--run-dim)}
-.stat-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;color:var(--gym)}
-.stat.r .stat-val{color:var(--run)}
-.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.stat{background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;padding:20px;position:relative;overflow:hidden;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:border-color .2s}
+.stat:hover{border-color:rgba(255,255,255,0.18)}
+.stat::before{content:'';position:absolute;inset:0;border-radius:18px;background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 60%);pointer-events:none}
+.stat.g::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,0.25),transparent 70%);pointer-events:none}
+.stat.r::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.25),transparent 70%);pointer-events:none}
+.stat-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:38px;line-height:1;background:linear-gradient(135deg,var(--gym),var(--gym2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat.r .stat-val{background:linear-gradient(135deg,var(--run),var(--run2));-webkit-background-clip:text;background-clip:text}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
 
-/* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+/* GLASS CARDS */
+.card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:24px;margin-bottom:20px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);position:relative;overflow:hidden;transition:border-color .25s}
+.card::before{content:'';position:absolute;inset:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 50%);pointer-events:none}
+.card:hover{border-color:rgba(255,255,255,0.16)}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.card-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.card-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
 .card-meta{font-size:12px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
 .full{grid-column:1/-1}
-@media(max-width:768px){
-  .grid2{grid-template-columns:1fr}
-  .full{grid-column:1}
-  .wrap{padding:16px 12px}
-  .exercise-item{padding:8px 10px}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .run-stats-row{grid-template-columns:1fr 1fr}
-  .pr-grid{grid-template-columns:1fr 1fr}
-  header{margin-bottom:20px;gap:10px}
-  .logo{font-size:32px}
-  .tabs{width:100%}
-  .tab{flex:1;padding:9px 10px;font-size:12px}
-  .card{padding:16px}
-  .stat{padding:14px}
-  .stat-val{font-size:30px}
-  .card-title{font-size:10px}
-  .pr-card{padding:10px 12px}
-  .pr-weight{font-size:20px}
-  canvas{max-height:160px}
-}
 
 /* LAST WORKOUT */
-.workout-date{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gym);margin-bottom:4px}
-.workout-groups{font-size:13px;color:var(--muted);margin-bottom:20px}
+.workout-date{font-family:'Bebas Neue',sans-serif;font-size:32px;background:linear-gradient(135deg,var(--gym),var(--gym2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.workout-groups{font-size:12px;color:var(--muted);margin-bottom:20px;letter-spacing:0.5px}
 .exercise-list{display:flex;flex-direction:column;gap:8px}
-.exercise-item{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--surface2);border-radius:10px;transition:background .15s}
-.exercise-item:hover{background:var(--border)}
-.ex-name{font-size:14px;font-weight:500}.exercise-item>div:first-child{min-width:0}.ex-item-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
-.ex-muscle{font-size:11px;color:var(--muted);margin-top:2px}
-.ex-pill{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;text-align:center;flex-shrink:0;flex-grow:0;width:auto}
-.ex-series{background:rgba(200,245,56,0.08);color:var(--gym)}
-.ex-reps{background:rgba(255,255,255,0.05);color:var(--muted)}
-.ex-peso{background:rgba(245,166,35,0.12);color:var(--gold);min-width:70px}
-@media(max-width:600px){.ex-pill{padding:3px 7px;font-size:10px;}}
+.exercise-item{display:flex;flex-direction:column;gap:6px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:14px;transition:all .2s;backdrop-filter:blur(8px)}
+.exercise-item:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12)}
+.exercise-item>div:first-child{min-width:0}
+.ex-item-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
+.ex-name{font-size:14px;font-weight:600;letter-spacing:0.2px}
+.ex-muscle{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:0.5px;text-transform:uppercase}
+.ex-pill{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap;flex-shrink:0;flex-grow:0;width:auto;letter-spacing:0.3px}
+.ex-series{background:rgba(59,130,246,0.15);color:var(--gym2);border:1px solid rgba(59,130,246,0.2)}
+.ex-reps{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid rgba(255,255,255,0.08)}
+.ex-peso{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.2);min-width:70px}
+@media(max-width:600px){.ex-pill{padding:3px 8px;font-size:10px;}}
 
 /* PR TABLE */
-.pr-search{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:16px;outline:none;transition:border-color .2s}
-.pr-search:focus{border-color:var(--gym)}
+.pr-search{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);color:var(--text);padding:10px 16px;border-radius:12px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:16px;outline:none;transition:all .2s;backdrop-filter:blur(8px)}
+.pr-search:focus{border-color:var(--gym);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
 .pr-search::placeholder{color:var(--muted)}
 .pr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;max-height:420px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.pr-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color .2s}
-.pr-card:hover{border-color:var(--gold)}
-.pr-icon{font-size:20px;flex-shrink:0}
+.pr-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all .2s;backdrop-filter:blur(8px)}
+.pr-card:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.15);transform:translateY(-1px)}
 .pr-info{flex:1;min-width:0}
-.pr-exercise{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pr-muscle{font-size:11px;color:var(--muted)}
-.pr-weight{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);flex-shrink:0}
+.pr-exercise{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-muscle{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.pr-weight{font-family:'Bebas Neue',sans-serif;font-size:26px;flex-shrink:0}
 .pr-date{font-size:10px;color:var(--muted)}
 
 /* VOLUME CHART */
 canvas{display:block;width:100%}
 
 /* MUSCLE BARS */
-.mbars{display:flex;flex-direction:column;gap:10px}
-.mrow{display:flex;align-items:center;gap:12px}
-.mname{width:100px;color:var(--muted);font-size:12px;text-align:right;flex-shrink:0}
-.mtrack{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
-.mfill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gym),#a0c832)}
-.mcnt{width:28px;text-align:right;font-size:12px;color:var(--muted)}
+.mrow{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.mname{width:90px;color:var(--muted);font-size:11px;text-align:right;flex-shrink:0;text-transform:uppercase;letter-spacing:0.5px}
+.mtrack{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.mfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gym),var(--gym2))}
+.mcnt{width:28px;text-align:right;font-size:11px;color:var(--muted)}
 
 /* RUN */
 .run-table{width:100%;border-collapse:collapse;font-size:13px}
-.run-table th{text-align:left;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border)}
-.run-table td{padding:11px 12px;border-bottom:1px solid var(--surface2)}
+.run-table th{text-align:left;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--glass-border)}
+.run-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04)}
 .run-table tr:last-child td{border-bottom:none}
-.run-table tr:hover td{background:var(--surface2)}
-.pr-badge{background:rgba(245,56,96,.15);color:var(--red);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.run-table tr:hover td{background:rgba(255,255,255,0.03)}
+.pr-badge{background:rgba(239,68,68,0.15);color:var(--red);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid rgba(239,68,68,0.2)}
 .note-cell{color:var(--muted);font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Accordion PRs */
-.muscle-group-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 14px;border-radius:10px;margin-bottom:4px;transition:background .15s;user-select:none}
-.muscle-group-header:hover{background:var(--surface2)}
-.muscle-group-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
-.muscle-group-count{font-size:11px;color:var(--muted);margin-left:8px}
+/* PR ACCORDION */
+.muscle-group-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 14px;border-radius:12px;margin-bottom:4px;transition:all .2s;user-select:none}
+.muscle-group-header:hover{background:rgba(255,255,255,0.05)}
+.muscle-group-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.muscle-group-count{font-size:10px;color:var(--muted);margin-left:8px}
 .muscle-group-chevron{font-size:12px;color:var(--muted);transition:transform .25s}
 .muscle-group-chevron.open{transform:rotate(180deg)}
 .muscle-group-body{display:none;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:12px}
 .muscle-group-body.open{display:grid}
 
-/* Date search */
+/* DATE SEARCH */
 .date-search-wrap{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
-.date-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;cursor:pointer}
-.date-input:focus{border-color:var(--gym)}
+.date-input{background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);color:var(--text);padding:10px 14px;border-radius:12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:all .2s;cursor:pointer;backdrop-filter:blur(8px)}
+.date-input:focus{border-color:var(--gym);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
 .date-results{display:flex;flex-direction:column;gap:8px}
-.date-result-header{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gym);margin-bottom:4px}
-.date-result-groups{font-size:13px;color:var(--muted);margin-bottom:16px}
-.no-results{color:var(--muted);font-size:14px;padding:20px 0}.active-muscle{}
+.date-result-header{font-family:'Bebas Neue',sans-serif;font-size:28px;background:linear-gradient(135deg,var(--gym),var(--gym2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.date-result-groups{font-size:12px;color:var(--muted);margin-bottom:16px}
+.no-results{color:var(--muted);font-size:14px;padding:20px 0}
 
 /* RUN STATS */
 .run-stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+
+/* LIGHT MODE */
+body.light{
+  --bg:#f0f3fa;
+  --surface:rgba(255,255,255,0.85);
+  --surface2:rgba(255,255,255,0.70);
+  --border:rgba(0,0,50,0.08);
+  --border2:rgba(0,0,50,0.12);
+  --glass:rgba(255,255,255,0.75);
+  --glass-border:rgba(0,0,80,0.10);
+  --text:#0d1030;
+  --muted:rgba(60,70,120,0.55);
+  --gym:#2563eb;
+  --gym2:#3b82f6;
+  --run:#dc2626;
+  --run2:#ef4444;
+  --gym-dim:rgba(37,99,235,0.10);
+  --run-dim:rgba(220,38,38,0.10);
+  --glow-blue:rgba(37,99,235,0.15);
+}
+body.light::before{background:
+  radial-gradient(ellipse 80% 50% at 20% -10%,rgba(37,99,235,0.08) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 40% at 80% 110%,rgba(220,38,38,0.07) 0%,transparent 60%)}
+body.light::after{background-image:linear-gradient(rgba(0,0,100,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,100,0.02) 1px,transparent 1px);background-size:48px 48px}
+body.light .sidebar{background:rgba(255,255,255,0.70);border-right-color:rgba(0,0,80,0.08)}
+body.light .card{background:rgba(255,255,255,0.80)}
+body.light .stat{background:rgba(255,255,255,0.80)}
+body.light .exercise-item{background:rgba(0,0,50,0.03);border-color:rgba(0,0,50,0.06)}
+body.light .exercise-item:hover{background:rgba(0,0,50,0.05)}
+body.light .ex-series{background:rgba(37,99,235,0.10);color:#1d4ed8;border-color:rgba(37,99,235,0.15)}
+body.light .ex-reps{background:rgba(0,0,0,0.05);color:rgba(60,70,120,0.7);border-color:rgba(0,0,0,0.07)}
+body.light .ex-peso{background:rgba(180,100,0,0.08);color:#92400e;border-color:rgba(180,100,0,0.12)}
+body.light .pr-card{background:rgba(255,255,255,0.75);border-color:rgba(0,0,80,0.08)}
+body.light .workout-date{background:linear-gradient(135deg,#2563eb,#3b82f6);-webkit-background-clip:text;background-clip:text}
+body.light .date-result-header{background:linear-gradient(135deg,#2563eb,#3b82f6);-webkit-background-clip:text;background-clip:text}
+body.light .stat-val{background:linear-gradient(135deg,#2563eb,#3b82f6);-webkit-background-clip:text;background-clip:text}
+body.light .stat.r .stat-val{background:linear-gradient(135deg,#dc2626,#ef4444);-webkit-background-clip:text;background-clip:text}
+body.light .mfill{background:linear-gradient(90deg,#2563eb,#3b82f6)}
+
+/* SIDEBAR MOBILE */
+.sidebar-toggle{display:none;background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;backdrop-filter:blur(4px)}
+
+@media(max-width:900px){
+  .sidebar{position:fixed;left:-220px;top:0;height:100vh;z-index:100;transition:left .3s cubic-bezier(.4,0,.2,1)}
+  .sidebar.open{left:0}
+  .sidebar-overlay.open{display:block}
+  .sidebar-toggle{display:flex}
+  .main-content{padding:20px 16px}
+  .top-bar{margin-bottom:20px}
+  .grid2{grid-template-columns:1fr}
+  .full{grid-column:1}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .run-stats-row{grid-template-columns:1fr 1fr}
+  .pr-grid{grid-template-columns:1fr 1fr}
+  .stat{padding:14px}
+  .stat-val{font-size:30px}
+  .card{padding:16px}
+  .pr-card{padding:10px 12px}
+  .pr-weight{font-size:20px}
+  canvas{max-height:160px}
+  .tabs{width:100%}
+  .tab{flex:1;padding:8px 8px;font-size:11px}
+}
+
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">MY<br><span>TRAINING</span></div>
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" id="nav-gym" onclick="setTab('gym');setNav('gym')">
+      <span class="nav-icon">💪</span> Gym
+    </div>
+    <div class="nav-item" id="nav-run" onclick="setTab('run');setNav('run')">
+      <span class="nav-icon">🏃</span> Running
+    </div>
+    <div class="nav-section">Herramientas</div>
+    <div class="nav-item" onclick="scrollToSection('prProgressCard')">
+      <span class="nav-icon">📈</span> Progresión PRs
+    </div>
+    <div class="nav-item" onclick="scrollToSection('prGrouped')">
+      <span class="nav-icon">🏆</span> Records (PRs)
+    </div>
+    <div class="nav-item" onclick="scrollToSection('searchResults')">
+      <span class="nav-icon">🔍</span> Buscar
+    </div>
+    <div class="sidebar-bottom">
+      <div class="nav-section" style="padding:0 0 8px">Estadísticas</div>
+      <div class="body-stats" id="sidebarStats">
+        <div class="body-stat-row">
+          <span class="body-stat-label">PESO</span>
+          <span class="body-stat-val" id="sidebarWeight">—</span>
+        </div>
+        <div class="body-stat-row">
+          <span class="body-stat-label">SESIONES</span>
+          <span class="body-stat-val" id="sidebarSessions">—</span>
+        </div>
+        <div class="body-stat-row">
+          <span class="body-stat-label">EJERCICIOS</span>
+          <span class="body-stat-val" id="sidebarExercises">—</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main-content">
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="top-bar-title" id="topBarTitle">GYM BOARD</div>
+    </div>
+    <div class="top-bar-right">
     <div class="logo">MY<br><span>TRAINING</span><br>BOARD</div>
     <div class="header-right">
       <div class="tabs">
-        <button class="tab gym" onclick="setTab(&#39;gym&#39;)">💪 GYM</button>
-        <button class="tab" onclick="setTab(&#39;run&#39;)">🏃 RUNNING</button>
+        <button class="tab gym" onclick="setTab('gym');setNav('gym')">💪 GYM</button>
+        <button class="tab" onclick="setTab('run');setNav('run')">🏃 RUNNING</button>
       </div>
       <div class="statusbar">
         <div class="dot" id="dot" style="background: var(--gym);"></div>
@@ -179,7 +312,7 @@ canvas{display:block;width:100%}
         <button class="theme-switch" onclick="toggleTheme()" id="themeBtn">🌙 Oscuro</button>
       </div>
     </div>
-  </header>
+  </div>
 
   <div class="loading" id="loading" style="display: none;"><div class="spinner"></div><div>Conectando con Google Sheets...</div></div>
 
@@ -229,14 +362,9 @@ canvas{display:block;width:100%}
       <div id="prProgChart" style="min-height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px">Seleccioná un grupo muscular</div>
     </div>
 
-    <!-- Peso corporal (slim) -->
-    <div class="card">
-      <div class="card-title" style="margin-bottom:16px">⚖️ Peso corporal</div>
-      <canvas id="cWeight" height="120"></canvas>
-      <div id="weightTable"></div>
-    </div>
-
     <!-- PRs -->
+    <canvas id="cWeight" style="display:none"></canvas>
+    <div id="weightTable" style="display:none"></div>
     <div class="card">
       <div class="card-header" style="margin-bottom:16px">
         <div class="card-title">🏆 PRs por ejercicio</div>
@@ -569,6 +697,7 @@ function buildGym(){
     <div class="stat g"><div class="stat-label">Ejercicios</div><div class="stat-val">${gymData.length}</div><div class="stat-sub">registrados</div></div>
     <div class="stat g"><div class="stat-label">Peso corporal</div><div class="stat-val">${lastW||'—'}<span style="font-size:16px"> kg</span></div><div class="stat-sub">${diffW!==null?(diffW>0?'▲ ':'▼ ')+Math.abs(diffW).toFixed(1)+' kg total':''}</div></div>
     <div class="stat g"><div class="stat-label">Grupo más trabajado</div><div class="stat-val" style="font-size:22px;line-height:1.3">${muscles[0]?.[0]||'—'}</div><div class="stat-sub">${muscles[0]?.[1]||0} ejercicios</div></div>`;
+  updateSidebarStats(dates.length, gymData.length, lastW);
 
   // ── 1. Último entrenamiento ──
   const lastDate=dates[dates.length-1];
@@ -1186,6 +1315,35 @@ function clearSearch(){
   document.getElementById('clearSearchBtn').style.display='none';
 }
 
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+function setNav(tab){
+  document.querySelectorAll('.nav-item[id^="nav-"]').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('nav-'+tab);
+  if(el)el.classList.add('active');
+  document.getElementById('topBarTitle').textContent=tab==='gym'?'GYM BOARD':'RUNNING BOARD';
+  closeSidebar();
+}
+function scrollToSection(id){
+  const el=document.getElementById(id);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}
+  closeSidebar();
+}
+function updateSidebarStats(sessions,exercises,weight){
+  const ws=document.getElementById('sidebarWeight');
+  const ss=document.getElementById('sidebarSessions');
+  const es=document.getElementById('sidebarExercises');
+  if(ws)ws.textContent=weight?weight+' kg':'—';
+  if(ss)ss.textContent=sessions||'—';
+  if(es)es.textContent=exercises||'—';
+}
+
 function toggleTheme(){
   const isLight=document.body.classList.toggle('light');
   document.getElementById('themeBtn').textContent=isLight?'🌙 Oscuro':'☀️ Claro';
@@ -1407,4 +1565,6 @@ document.getElementById('regModal').addEventListener('click',function(e){if(e.ta
 document.getElementById('runFecha').value=new Date().toISOString().slice(0,10);
 document.getElementById('runModal').addEventListener('click',function(e){if(e.target===this)closeRunModal();});
 </script>
+  </div>
+</div>
 </body></html>
