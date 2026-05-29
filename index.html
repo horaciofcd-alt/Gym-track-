@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Training Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg:#060b18;--surface:rgba(10,20,50,0.55);--glass:rgba(20,50,120,0.22);
+  --glass-border:rgba(80,140,255,0.18);--glass-border2:rgba(80,140,255,0.08);
+  --blue:#3b82f6;--blue2:#60a5fa;--blue3:#93c5fd;
+  --red:#ef4444;--red2:#f87171;
+  --text:#f0f4ff;--text2:#8ba4d4;--text3:#4a6499;
+  --card-bg:rgba(10,20,50,0.55);--input-bg:rgba(20,50,120,0.18);
+  --run-bg:#110608;--run-surface:rgba(50,10,10,0.55);
+  --run-glass:rgba(120,20,20,0.22);--run-border:rgba(255,80,80,0.18);
+}
+[data-theme="light"] {
+  --bg:#f0f4ff;--surface:rgba(255,255,255,0.82);--glass:rgba(200,220,255,0.5);
+  --glass-border:rgba(59,130,246,0.25);--glass-border2:rgba(59,130,246,0.12);
+  --text:#0f1c3f;--text2:#3a5a99;--text3:#7a99cc;
+  --card-bg:rgba(255,255,255,0.85);--input-bg:rgba(200,220,255,0.3);
+  --run-bg:#fff0f0;--run-surface:rgba(255,240,240,0.85);
+  --run-glass:rgba(255,200,200,0.4);--run-border:rgba(239,68,68,0.2);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background 0.3s}
+body::before{content:'';position:fixed;top:-120px;left:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(37,99,235,0.15) 0%,transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-80px;right:-60px;width:320px;height:320px;background:radial-gradient(circle,rgba(239,68,68,0.1) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+.slides-wrapper{display:flex;width:200%;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}
+.slides-wrapper.run-mode{transform:translateX(-50%)}
+.slide{width:50%;min-height:100vh;padding:0 16px 100px}
+
+/* TOP BAR */
+.top-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
+.top-bar-actions{display:flex;gap:8px;align-items:center}
+.mode-switcher{display:flex;background:rgba(10,20,50,0.75);backdrop-filter:blur(16px);border:0.5px solid var(--glass-border);border-radius:14px;overflow:hidden}
+[data-theme="light"] .mode-switcher{background:rgba(255,255,255,0.85)}
+.mode-btn{padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);background:transparent;border:none;transition:all 0.3s;font-family:'DM Sans',sans-serif}
+.mode-btn.active{color:#fff;background:rgba(37,99,235,0.5)}
+.mode-btn.run-active{color:#fff;background:rgba(220,38,38,0.5)}
+.icon-btn{width:36px;height:36px;background:var(--glass);border:0.5px solid var(--glass-border);border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px);flex-shrink:0}
+.icon-btn i{font-size:17px;color:var(--blue2)}
+
+/* GLASS */
+.glass{background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:0.5px solid var(--glass-border);border-radius:20px;position:relative;overflow:hidden}
+.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(120,180,255,0.4),transparent)}
+[data-theme="light"] .glass::before{background:linear-gradient(90deg,transparent,rgba(59,130,246,0.2),transparent)}
+.glass-sm{background:var(--glass);backdrop-filter:blur(12px);border:0.5px solid var(--glass-border2);border-radius:14px}
+
+.big-num{font-size:48px;font-weight:700;letter-spacing:-2px;line-height:1;color:var(--text)}
+.big-unit{font-size:18px;font-weight:400;color:var(--text2)}
+.label{font-size:12px;color:var(--text3);font-weight:400;letter-spacing:0.3px}
+
+/* NAV */
+.nav-tabs{position:fixed;bottom:0;width:100%;max-width:480px;left:50%;transform:translateX(-50%);background:rgba(6,11,24,0.92);backdrop-filter:blur(24px);border-top:0.5px solid var(--glass-border);display:flex;justify-content:space-around;padding:10px 0 20px;z-index:50;transition:background 0.3s}
+[data-theme="light"] .nav-tabs{background:rgba(240,244,255,0.94)}
+.nav-tabs.run-mode{background:rgba(17,6,8,0.92);border-top-color:rgba(255,80,80,0.18)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--text3);cursor:pointer;padding:4px 12px;border-radius:12px;transition:all 0.2s;background:none;border:none;font-family:'DM Sans',sans-serif}
+.tab i{font-size:22px}
+.tab.active{color:var(--blue2)}
+.tab.run-active{color:var(--red2)}
+
+.section{display:none;padding-top:24px}
+.section.visible{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;padding:56px 0 16px}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.page-sub{font-size:13px;color:var(--text2);margin-top:3px}
+
+/* DAY PILLS */
+.day-row{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.day-row::-webkit-scrollbar{display:none}
+.day-pill{flex:0 0 auto;width:46px;text-align:center;padding:8px 4px 6px;border-radius:12px;font-size:11px;color:var(--text3);background:var(--glass);border:0.5px solid var(--glass-border2);cursor:pointer;transition:all 0.2s}
+.day-pill .dn{font-weight:700;font-size:12px;color:var(--text2);display:block}
+.day-pill .dd{display:block;margin-top:2px;font-size:9px;color:var(--text3)}
+.day-pill .dm{display:block;margin-top:4px;font-size:8px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.day-pill.active{background:rgba(37,99,235,0.3);border-color:rgba(96,165,250,0.5)}
+.day-pill.active .dn{color:var(--blue2)}
+.day-pill.active .dm{color:var(--blue3)}
+.day-pill.empty-day{opacity:0.35;cursor:default}
+.day-pill.has-data .dn{color:var(--text)}
+
+/* SESSION TABLE — key fix: nowrap on reps column */
+.ses-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+.ses-table{width:100%;border-collapse:collapse;font-size:12px;min-width:360px}
+.ses-table thead tr{border-bottom:0.5px solid var(--glass-border)}
+.ses-table th{padding:8px 10px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;text-align:left;white-space:nowrap}
+.ses-table th:not(:first-child){text-align:center}
+.ses-table tbody tr{border-bottom:0.5px solid var(--glass-border2);transition:background 0.15s}
+.ses-table tbody tr:last-child{border-bottom:none}
+.ses-table tbody tr:hover{background:rgba(59,130,246,0.04)}
+.ses-table td{padding:10px 10px;vertical-align:middle}
+.ses-table td:not(:first-child){text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)}
+.td-reps{white-space:nowrap !important;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
+.ex-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.ex-group{font-size:10px;color:var(--text3);margin-top:2px}
+.peso-badge{display:inline-block;background:rgba(37,99,235,0.15);color:var(--blue2);border:0.5px solid rgba(96,165,250,0.25);border-radius:6px;padding:2px 7px;font-size:11px;font-family:'DM Mono',monospace;white-space:nowrap}
+.total-badge{display:inline-block;background:rgba(239,68,68,0.12);color:var(--red2);border:0.5px solid rgba(248,113,113,0.2);border-radius:6px;padding:2px 7px;font-size:11px;font-family:'DM Mono',monospace}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{padding:14px}
+.stat-val{font-size:26px;font-weight:700;letter-spacing:-1px;color:var(--text)}
+.stat-unit{font-size:13px;color:var(--text2);font-weight:400}
+.streak-num{font-size:48px;font-weight:700;letter-spacing:-2px;background:linear-gradient(135deg,var(--blue2),var(--red2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.streak-dot{width:12px;height:12px;border-radius:4px;background:var(--glass);border:0.5px solid var(--glass-border2)}
+.streak-dot.done{background:var(--blue);border-color:var(--blue2)}
+.streak-dot.current{background:var(--red);border-color:var(--red2)}
+.prog-bar{height:4px;background:rgba(80,140,255,0.12);border-radius:4px;margin-top:8px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.tag{font-size:10px;padding:2px 8px;border-radius:20px;display:inline-block;background:rgba(37,99,235,0.15);color:var(--blue2);border:0.5px solid rgba(96,165,250,0.2)}
+
+/* STREAK 3-BOX (home + stats) */
+.streak-trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.streak-trio-item{text-align:center;padding:12px 6px}
+.sti-val{font-size:22px;font-weight:700;letter-spacing:-1px;color:var(--text)}
+.sti-val.grad{background:linear-gradient(135deg,var(--blue2),var(--red2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sti-label{font-size:9px;color:var(--text3);margin-top:3px;line-height:1.4;text-transform:uppercase;letter-spacing:0.4px}
+.sti-unit{font-size:9px;color:var(--text3);display:block;margin-top:1px}
+
+/* BODY METRICS CARD */
+.metrics-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:14px;border-top:0.5px solid var(--glass-border2);padding-top:14px}
+.metric-item{text-align:center;padding:4px 0}
+.metric-item:not(:last-child){border-right:0.5px solid var(--glass-border2)}
+.metric-val{font-size:18px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
+.metric-unit{font-size:10px;color:var(--text3);margin-left:2px}
+.metric-label{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* RUNNING */
+.glass-run{background:var(--run-surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:0.5px solid var(--run-border);border-radius:20px;position:relative;overflow:hidden}
+.glass-run::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,120,120,0.4),transparent)}
+.glass-run-sm{background:var(--run-glass);backdrop-filter:blur(12px);border:0.5px solid rgba(255,80,80,0.1);border-radius:14px}
+.run-streak-num{font-size:48px;font-weight:700;letter-spacing:-2px;background:linear-gradient(135deg,var(--red2),#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.run-streak-dot{width:12px;height:12px;border-radius:4px;background:rgba(239,68,68,0.15);border:0.5px solid rgba(255,80,80,0.15)}
+.run-streak-dot.done{background:var(--red);border-color:var(--red2)}
+.run-streak-dot.current{background:#f59e0b;border-color:#fbbf24}
+.run-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.run-table{width:100%;border-collapse:collapse;font-size:12px}
+.run-table th{text-align:left;font-size:10px;font-weight:500;color:var(--text3);padding:0 6px 10px;text-transform:uppercase;letter-spacing:0.5px}
+.run-table th:not(:first-child){text-align:right}
+.run-table td{padding:9px 6px;border-top:0.5px solid rgba(255,80,80,0.07)}
+.run-table td:not(:first-child){text-align:right;font-family:'DM Mono',monospace;color:var(--text2);font-size:11px}
+
+/* MODALS shared */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border:0.5px solid var(--glass-border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+[data-theme="light"] .modal{background:#f8faff}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{width:32px;height:32px;background:var(--glass);border:0.5px solid var(--glass-border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.modal-close i{font-size:16px;color:var(--text2)}
+.field-group{margin-bottom:14px}
+.field-label{font-size:12px;color:var(--text3);margin-bottom:6px;display:block;font-weight:500;letter-spacing:0.3px}
+.field-input{width:100%;background:var(--input-bg);border:0.5px solid var(--glass-border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border 0.2s}
+.field-input:focus{border-color:var(--blue2)}
+[data-theme="light"] .field-input{background:rgba(220,235,255,0.4)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.exercise-entry{background:var(--glass);border:0.5px solid var(--glass-border2);border-radius:12px;padding:12px;margin-bottom:10px;position:relative}
+.btn-add-ex{width:100%;padding:10px;background:rgba(37,99,235,0.12);border:0.5px dashed rgba(96,165,250,0.4);border-radius:10px;color:var(--blue2);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.btn-add-ex:hover{background:rgba(37,99,235,0.2)}
+.btn-submit{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--blue2));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:6px;transition:opacity 0.2s}
+.btn-submit:hover{opacity:0.9}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+.btn-remove-ex{position:absolute;top:8px;right:8px;width:24px;height:24px;background:rgba(239,68,68,0.15);border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--red2)}
+.btn-remove-ex i{font-size:14px}
+.save-status{text-align:center;font-size:13px;margin-top:10px;color:var(--text2);min-height:20px}
+
+.row-between{display:flex;justify-content:space-between;align-items:center}
+.mb-14{margin-bottom:14px}
+.p-16{padding:16px}
+.p-18{padding:18px}
+.loading{text-align:center;padding:32px 0;color:var(--text3);font-size:13px}
+.loading i{font-size:22px;display:block;margin-bottom:6px;animation:spin 1s linear infinite}
+.empty{text-align:center;padding:24px;color:var(--text3);font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btnGym" onclick="setMode('gym')">
+      <i class="ti ti-barbell" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Gym
+    </button>
+    <button class="mode-btn" id="btnRun" onclick="setMode('run')">
+      <i class="ti ti-run" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Running
+    </button>
+  </div>
+  <div class="top-bar-actions">
+    <div class="icon-btn" onclick="toggleTheme()" title="Tema">
+      <i class="ti ti-sun" id="themeIcon"></i>
+    </div>
+    <div class="icon-btn" onclick="openSettings()" title="Ajustes">
+      <i class="ti ti-settings"></i>
+    </div>
+    <div class="icon-btn" onclick="openAddModal()" title="Nueva sesión">
+      <i class="ti ti-plus"></i>
+    </div>
+  </div>
+</div>
+
+<div class="slides-wrapper" id="slidesWrapper">
+
+  <!-- GYM -->
+  <div class="slide" id="slideGym">
+
+    <!-- HOME -->
+    <div class="section visible" id="sec-home">
+      <div class="page-header">
+        <div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:4px" id="greetingText">Hola</div>
+          <div class="page-title">Workouts</div>
+          <div class="page-sub" id="homeSubtitle">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Peso + métricas corporales -->
+      <div class="glass p-18 mb-14" id="weightHero">
+        <div class="loading"><i class="ti ti-loader-2"></i>Cargando...</div>
+      </div>
+
+      <!-- Sesiones + Racha -->
+      <div class="stat-grid mb-14">
+        <div class="glass-sm stat-card">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-flame" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Sesiones sem.</div>
+          <div><span class="stat-val" id="statSessions">—</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="progSessions" style="width:0%"></div></div>
+        </div>
+        <div class="glass-sm p-16" style="padding:14px">
+          <!-- racha trio pequeño -->
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-fire" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Racha (semanas)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">
+            <div>
+              <div style="font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--blue2),var(--red2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="homeRachaAct">—</div>
+              <div style="font-size:8px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:0.3px">Actual</div>
+            </div>
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--text2)" id="homeRachaUlt">—</div>
+              <div style="font-size:8px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:0.3px">Última</div>
+            </div>
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--text2)" id="homeRachaMej">—</div>
+              <div style="font-size:8px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:0.3px">Mejor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Última sesión -->
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Última sesión</div>
+        <div style="font-size:12px;color:var(--text2)" id="lastSessionDate">—</div>
+      </div>
+      <div class="glass p-16 mb-14" id="lastSessionCard">
+        <div class="loading"><i class="ti ti-loader-2"></i></div>
+      </div>
+    </div>
+
+    <!-- SESIÓN -->
+    <div class="section" id="sec-session">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Sesiones</div>
+          <div class="page-sub" id="sessionWeekLabel">Semana actual</div>
+        </div>
+      </div>
+      <div class="day-row" id="dayRowSession"></div>
+      <div id="sessionDetail"><div class="empty">Selecciona un día</div></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="section" id="sec-stats">
+      <div class="page-header">
+        <div><div class="page-title">Stats</div><div class="page-sub">Tu progreso</div></div>
+      </div>
+
+      <!-- Racha 3 cajas con unidad -->
+      <div class="glass p-16 mb-14">
+        <div class="label" style="margin-bottom:12px"><i class="ti ti-calendar-check" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Racha de entrenamiento</div>
+        <div class="streak-trio">
+          <div class="streak-trio-item glass-sm">
+            <div class="sti-val grad" id="siCurrent">0</div>
+            <span class="sti-unit">semanas</span>
+            <div class="sti-label">Racha actual</div>
+          </div>
+          <div class="streak-trio-item glass-sm">
+            <div class="sti-val" id="siLast">0</div>
+            <span class="sti-unit">semanas</span>
+            <div class="sti-label">Última racha</div>
+          </div>
+          <div class="streak-trio-item glass-sm">
+            <div class="sti-val" id="siBest">0</div>
+            <span class="sti-unit">semanas</span>
+            <div class="sti-label">Mejor racha</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-grid mb-14">
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-flame" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Días entrenados</div>
+          <div><span class="stat-val" id="statTotalSessions">—</span></div>
+        </div>
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-scale" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Peso actual</div>
+          <div><span class="stat-val" id="statWeight">—</span><span class="stat-unit"> kg</span></div>
+          <div class="label" style="margin-top:4px" id="statWeightDelta">—</div>
+        </div>
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-ruler" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Talla</div>
+          <div><span class="stat-val" id="statTalla">—</span><span class="stat-unit" id="statTallaUnit"> cm</span></div>
+          <div class="label" style="margin-top:4px" id="statIMC">IMC —</div>
+        </div>
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-heart-rate-monitor" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>VO2 Max</div>
+          <div><span class="stat-val" id="statVO2">—</span></div>
+          <div class="label" style="margin-top:4px">ml/kg/min</div>
+        </div>
+      </div>
+
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Progresión de peso</div>
+      </div>
+      <div class="glass p-16 mb-14">
+        <div style="position:relative;height:160px">
+          <canvas id="weightStatsChart" role="img" aria-label="Progresión peso corporal">Peso</canvas>
+        </div>
+      </div>
+
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Volumen por grupo muscular</div>
+      </div>
+      <div class="glass p-16 mb-14">
+        <div style="position:relative;height:200px">
+          <canvas id="volumeChart" role="img" aria-label="Volumen por grupo muscular">Volumen</canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /slideGym -->
+
+  <!-- RUNNING -->
+  <div class="slide" style="background:var(--run-bg)" id="slideRun">
+    <div class="section visible" id="sec-run-home">
+      <div class="page-header">
+        <div><div class="page-title">Running</div><div class="page-sub" id="runSubtitle">Cargando...</div></div>
+      </div>
+      <div class="run-stat-grid" id="runTopStats">
+        <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+        <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+        <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+        <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+      </div>
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Progresión de km</div>
+        <div style="font-size:11px;color:var(--text3)" id="runChartSub">Últimas salidas</div>
+      </div>
+      <div class="glass-run p-16 mb-14">
+        <div style="position:relative;height:160px">
+          <canvas id="runKmChart" role="img" aria-label="Progresión km">km por salida</canvas>
+        </div>
+      </div>
+      <div class="glass-run p-18 mb-14">
+        <div class="row-between">
+          <div>
+            <div class="label" style="margin-bottom:6px">Racha running</div>
+            <div class="run-streak-num" id="runStreakNum">—</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px">semanas seguidas</div>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;max-width:120px;justify-content:flex-end" id="runStreakDots"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-races">
+      <div class="page-header">
+        <div><div class="page-title">Historial</div><div class="page-sub">Todas las salidas</div></div>
+      </div>
+      <div class="run-stat-grid mb-14">
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px">Salidas</div>
+          <div class="stat-val" id="runTotalRuns">—</div>
+        </div>
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px">Km acumulados</div>
+          <div><span class="stat-val" id="runTotalKm">—</span><span class="stat-unit"> km</span></div>
+        </div>
+      </div>
+      <div class="glass-run p-16 mb-14">
+        <table class="run-table">
+          <thead><tr><th>Fecha</th><th>Km</th><th>Tiempo</th><th>Pace</th><th>VO2</th></tr></thead>
+          <tbody id="runLogTbody"><tr><td colspan="5"><div class="loading"><i class="ti ti-loader-2"></i>Cargando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /slides-wrapper -->
+
+<nav class="nav-tabs" id="gymNav">
+  <button class="tab active" id="tab-home" onclick="showGymSection('home')"><i class="ti ti-home"></i>Inicio</button>
+  <button class="tab" id="tab-session" onclick="showGymSection('session')"><i class="ti ti-calendar-event"></i>Sesión</button>
+  <button class="tab" id="tab-stats" onclick="showGymSection('stats')"><i class="ti ti-chart-line"></i>Stats</button>
+</nav>
+<nav class="nav-tabs" id="runNav" style="display:none">
+  <button class="tab run-active" id="tab-run-home" onclick="showRunSection('run-home')"><i class="ti ti-home"></i>Inicio</button>
+  <button class="tab" id="tab-races" onclick="showRunSection('races')"><i class="ti ti-list"></i>Historial</button>
+</nav>
+
+<!-- ADD SESSION MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva sesión</div>
+      <div class="modal-close" onclick="closeAddModal()"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Fecha</label>
+      <input type="date" class="field-input" id="addFecha">
+    </div>
+    <div class="field-row mb-14">
+      <div class="field-group" style="margin-bottom:0">
+        <label class="field-label">Grupo muscular</label>
+        <input type="text" class="field-input" id="addGrupo" placeholder="Pecho, Espalda...">
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <label class="field-label">Peso corporal (kg)</label>
+        <input type="text" class="field-input" id="addPesoCorp" placeholder="84.6">
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text2)">Ejercicios</div>
+    <div id="exerciseEntries"></div>
+    <button class="btn-add-ex mb-14" onclick="addExerciseEntry()">
+      <i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Añadir ejercicio
+    </button>
+    <button class="btn-submit" id="btnSaveSession" onclick="saveSession()">
+      <i class="ti ti-device-floppy" style="font-size:15px;vertical-align:-2px;margin-right:6px"></i>Guardar sesión
+    </button>
+    <div class="save-status" id="saveStatus"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Ajustes</div>
+      <div class="modal-close" onclick="closeSettings()"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Nombre</label>
+        <input type="text" class="field-input" id="setNombre" placeholder="Horacio">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Edad</label>
+        <input type="number" class="field-input" id="setEdad" placeholder="28">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Peso (kg)</label>
+        <input type="number" class="field-input" id="setPeso" placeholder="84.6" step="0.1">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Talla (cm)</label>
+        <input type="number" class="field-input" id="setTalla" placeholder="180">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">% Grasa corporal</label>
+        <input type="number" class="field-input" id="setGrasa" placeholder="18" step="0.1">
+      </div>
+      <div class="field-group">
+        <label class="field-label">VO2 Max (ml/kg/min)</label>
+        <input type="number" class="field-input" id="setVO2" placeholder="48">
+      </div>
+    </div>
+    <button class="btn-submit" onclick="saveSettings()">
+      <i class="ti ti-check" style="font-size:15px;vertical-align:-2px;margin-right:6px"></i>Guardar ajustes
+    </button>
+    <div class="save-status" id="settingsStatus"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const SUPA_URL='https://jhtzbtxmxcptlbuyputk.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodHpidHhteGNwdGxidXlwdXRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTg5OTAsImV4cCI6MjA5NTU3NDk5MH0.JvjeWQPtt_kx7nlv5BRCsOzsQ4YDw22Y6u_AvoqJYIo';
+const H={'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'};
+
+async function sbGet(t,p){
+  try{
+    const q=new URLSearchParams(p||{});
+    const r=await fetch(SUPA_URL+'/rest/v1/'+t+'?'+q,{headers:H});
+    if(!r.ok)return[];
+    return r.json();
+  }catch(e){return[]}
+}
+async function sbPost(t,b){
+  try{
+    const r=await fetch(SUPA_URL+'/rest/v1/'+t,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(b)});
+    return r.ok;
+  }catch(e){return false}
+}
+
+let allEntrenos=[],allRunning=[],statsChartsDone=false;
+let profile={nombre:'',edad:'',peso:'',talla:'',grasa:'',vo2:''};
+
+/* HELPERS */
+const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const DAYS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function fmtDate(iso){const[y,m,d]=iso.split('-');return d+' '+MONTHS[+m-1]+' '+y}
+function dayName(iso){return DAYS_ES[new Date(iso+'T12:00:00').getDay()]}
+function parseW(s){if(!s)return null;const n=parseFloat(s);return isNaN(n)?null:n}
+function weekStart(iso){
+  const d=new Date(iso+'T12:00:00'),day=d.getDay();
+  const m=new Date(d);m.setDate(d.getDate()+(day===0?-6:1-day));
+  return m.toISOString().slice(0,10);
+}
+function addDays(iso,n){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+
+/* STREAK */
+function calcStreaks(data){
+  const weeks=[...new Set(data.map(r=>weekStart(r.fecha)))].sort();
+  if(!weeks.length)return{current:0,last:0,best:0};
+  let runs=[],cur=1;
+  for(let i=1;i<weeks.length;i++){
+    const diff=Math.round((new Date(weeks[i]+'T12:00:00')-new Date(weeks[i-1]+'T12:00:00'))/(7*24*3600*1000));
+    if(diff===1)cur++;else{runs.push(cur);cur=1;}
+  }
+  runs.push(cur);
+  const best=Math.max(...runs);
+  const tw=weekStart(new Date().toISOString().slice(0,10));
+  const lw=addDays(tw,-7);
+  const last=weeks[weeks.length-1];
+  const active=last===tw||last===lw;
+  const currentStreak=active?runs[runs.length-1]:0;
+  const prevRun=runs.length>1?runs[runs.length-(active?2:1)]:0;
+  return{current:currentStreak,last:prevRun,best};
+}
+
+function buildDots(id,filled,total,isRun){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML='';
+  for(let i=0;i<total;i++){
+    const d=document.createElement('div');
+    const base=isRun?'run-streak-dot':'streak-dot';
+    d.className=base+(i<filled-1?' done':i===filled-1?' current':'');
+    el.appendChild(d);
+  }
+}
+
+/* SETTINGS */
+function loadProfile(){
+  try{const s=localStorage.getItem('tProfile');if(s)profile=JSON.parse(s);}catch(e){}
+}
+function saveSettings(){
+  profile={
+    nombre:document.getElementById('setNombre').value.trim(),
+    edad:document.getElementById('setEdad').value.trim(),
+    peso:document.getElementById('setPeso').value.trim(),
+    talla:document.getElementById('setTalla').value.trim(),
+    grasa:document.getElementById('setGrasa').value.trim(),
+    vo2:document.getElementById('setVO2').value.trim()
+  };
+  localStorage.setItem('tProfile',JSON.stringify(profile));
+  document.getElementById('settingsStatus').textContent='✓ Guardado';
+  setTimeout(()=>{closeSettings();applyProfile();},600);
+}
+function applyProfile(){
+  const n=profile.nombre;
+  const now=new Date().getHours();
+  const greet=now<12?'Buenos días':(now<18?'Buenas tardes':'Buenas noches');
+  document.getElementById('greetingText').textContent=n?greet+', '+n+' 👋':greet;
+  // stats
+  if(profile.talla){
+    document.getElementById('statTalla').textContent=profile.talla;
+    document.getElementById('statTallaUnit').textContent=' cm';
+    const w=parseW(profile.peso)||parseW(allEntrenos.length&&allEntrenos.filter(r=>parseW(r.peso_corporal))[0]?.peso_corporal);
+    if(w){
+      const h=+profile.talla/100;
+      document.getElementById('statIMC').textContent='IMC '+(w/(h*h)).toFixed(1);
+    }
+  }
+  if(profile.vo2) document.getElementById('statVO2').textContent=profile.vo2;
+  if(profile.grasa){
+    // update weight hero body metrics
+    renderWeightHero();
+  }
+}
+function openSettings(){
+  document.getElementById('setNombre').value=profile.nombre||'';
+  document.getElementById('setEdad').value=profile.edad||'';
+  document.getElementById('setPeso').value=profile.peso||'';
+  document.getElementById('setTalla').value=profile.talla||'';
+  document.getElementById('setGrasa').value=profile.grasa||'';
+  document.getElementById('setVO2').value=profile.vo2||'';
+  document.getElementById('settingsStatus').textContent='';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('open')}
+
+/* THEME */
+let dark=true;
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  document.getElementById('themeIcon').className=dark?'ti ti-sun':'ti ti-moon';
+}
+
+/* MODE */
+function setMode(m){
+  const run=m==='run';
+  document.getElementById('slidesWrapper').classList.toggle('run-mode',run);
+  document.getElementById('gymNav').style.display=run?'none':'flex';
+  document.getElementById('runNav').style.display=run?'flex':'none';
+  document.getElementById('runNav').classList.toggle('run-mode',run);
+  document.getElementById('btnGym').className='mode-btn'+(run?'':' active');
+  document.getElementById('btnRun').className='mode-btn'+(run?' run-active':'');
+  document.body.style.background=run?'var(--run-bg)':'var(--bg)';
+}
+function showGymSection(n){
+  ['home','session','stats'].forEach(s=>{
+    document.getElementById('sec-'+s).classList.toggle('visible',s===n);
+    document.getElementById('tab-'+s).classList.toggle('active',s===n);
+  });
+  if(n==='stats')renderStatsCharts();
+}
+function showRunSection(n){
+  ['run-home','races'].forEach(s=>document.getElementById('sec-'+s).classList.toggle('visible',s===n));
+  document.getElementById('tab-run-home').classList.toggle('run-active',n==='run-home');
+  document.getElementById('tab-races').classList.toggle('run-active',n==='races');
+}
+
+/* SESSION TABLE BUILDER */
+function buildSessionTable(exs){
+  let rows='';
+  exs.forEach(ex=>{
+    const reps=(ex.repeticiones||'—').replace(/;/g,' · ');
+    rows+=`<tr>
+      <td><div class="ex-name">${ex.ejercicio}</div><div class="ex-group">${ex.grupo_muscular}</div></td>
+      <td><span class="peso-badge">${ex.peso||'BW'}</span></td>
+      <td>${ex.series}</td>
+      <td class="td-reps">${reps}</td>
+      <td><span class="total-badge">${ex.total_repeticiones||'—'}</span></td>
+    </tr>`;
+  });
+  return`<div class="ses-wrap"><table class="ses-table">
+    <thead><tr><th>Ejercicio</th><th>Peso</th><th>Series</th><th>Reps</th><th>Total</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+/* GYM HOME */
+function renderWeightHero(){
+  const data=allEntrenos;
+  const withW=data.filter(r=>parseW(r.peso_corporal));
+  const latestW=withW.length?parseW(withW[0].peso_corporal):null;
+  const oldestW=withW.length>1?parseW(withW[withW.length-1].peso_corporal):null;
+  const talla=profile.talla?+profile.talla:180;
+  const grasa=profile.grasa?+profile.grasa:null;
+
+  let html='';
+  if(latestW){
+    const delta=oldestW?(latestW-oldestW).toFixed(1):null;
+    const dc=delta&&+delta<0?'#34d399':'#f87171';
+    const di=delta&&+delta<0?'ti-trending-down':'ti-trending-up';
+    const imc=(latestW/(talla/100*talla/100)).toFixed(1);
+    const musculo=grasa?(latestW*(1-grasa/100)).toFixed(1):null;
+
+    html=`<div class="row-between">
+      <div>
+        <div style="margin-bottom:4px"><span class="big-num">${latestW.toFixed(1)}</span><span class="big-unit"> kg</span></div>
+        <div class="label">Peso corporal · ${fmtDate(withW[0].fecha)}</div>
+        ${delta?`<div style="margin-top:8px;display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.1);border:0.5px solid rgba(16,185,129,0.2);border-radius:20px;padding:3px 10px"><i class="ti ${di}" style="font-size:12px;color:${dc}"></i><span style="font-size:12px;color:${dc}">${+delta>0?'+':''}${delta} kg total</span></div>`:''}
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric-item">
+        <div><span class="metric-val">${talla}</span><span class="metric-unit">cm</span></div>
+        <div class="metric-label">Talla</div>
+      </div>
+      <div class="metric-item">
+        <div><span class="metric-val">${imc}</span></div>
+        <div class="metric-label">IMC</div>
+      </div>
+      <div class="metric-item">
+        <div><span class="metric-val">${grasa?grasa+'%':'—'}</span></div>
+        <div class="metric-label">${musculo?'Masa musc.':'Grasa corp.'}</div>
+      </div>
+    </div>`;
+  } else {
+    html='<div class="empty">Sin peso registrado — configura en ajustes</div>';
+  }
+  document.getElementById('weightHero').innerHTML=html;
+}
+
+function renderGymHome(){
+  const data=allEntrenos;
+  if(!data.length){
+    document.getElementById('weightHero').innerHTML='<div class="empty">Sin datos registrados</div>';
+    return;
+  }
+  const lastDate=data[0].fecha;
+  document.getElementById('homeSubtitle').textContent='Última sesión: '+fmtDate(lastDate);
+  renderWeightHero();
+
+  const tw=weekStart(new Date().toISOString().slice(0,10));
+  const uniDates=[...new Set(data.map(r=>r.fecha))];
+  const twSess=uniDates.filter(d=>weekStart(d)===tw).length;
+  document.getElementById('statSessions').textContent=twSess;
+  document.getElementById('progSessions').style.width=Math.min(twSess/5*100,100)+'%';
+
+  const st=calcStreaks(data);
+  document.getElementById('homeRachaAct').textContent=st.current;
+  document.getElementById('homeRachaUlt').textContent=st.last;
+  document.getElementById('homeRachaMej').textContent=st.best;
+
+  const lastExs=data.filter(r=>r.fecha===lastDate);
+  const grupos=[...new Set(lastExs.map(r=>r.grupo_muscular))];
+  document.getElementById('lastSessionDate').textContent=dayName(lastDate)+' · '+fmtDate(lastDate);
+  document.getElementById('lastSessionCard').innerHTML=`
+    <div class="row-between" style="margin-bottom:14px">
+      <div style="font-size:15px;font-weight:600">${grupos.join(' + ')}</div>
+      <span style="font-size:11px;background:rgba(37,99,235,0.2);color:var(--blue2);padding:3px 10px;border-radius:20px;border:0.5px solid rgba(96,165,250,0.3)">${lastExs.length} ejercicios</span>
+    </div>
+    ${buildSessionTable(lastExs)}`;
+}
+
+/* SESSION WEEK */
+function buildSessionWeek(){
+  const lastDate=allEntrenos.length?allEntrenos[0].fecha:new Date().toISOString().slice(0,10);
+  const mon=weekStart(lastDate);
+  document.getElementById('sessionWeekLabel').textContent='Semana del '+fmtDate(mon);
+  const sessionDates=new Set(allEntrenos.map(r=>r.fecha));
+  const container=document.getElementById('dayRowSession');
+  container.innerHTML='';
+  const names=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let firstActive=null;
+  for(let i=0;i<7;i++){
+    const d=addDays(mon,i);
+    const hasData=sessionDates.has(d);
+    const pill=document.createElement('div');
+    pill.className='day-pill'+(hasData?' has-data':' empty-day');
+    pill.dataset.date=d;
+    const grp=hasData?[...new Set(allEntrenos.filter(r=>r.fecha===d).map(r=>r.grupo_muscular))][0]:'—';
+    pill.innerHTML=`<span class="dn">${names[i]}</span><span class="dd">${d.slice(5).replace('-','/')}</span><span class="dm">${grp}</span>`;
+    if(hasData){
+      pill.addEventListener('click',()=>{
+        container.querySelectorAll('.day-pill').forEach(p=>p.classList.remove('active'));
+        pill.classList.add('active');
+        renderSessionDetail(d);
+      });
+      if(!firstActive)firstActive=pill;
+    }
+    container.appendChild(pill);
+  }
+  if(firstActive){firstActive.classList.add('active');renderSessionDetail(firstActive.dataset.date);}
+}
+
+function renderSessionDetail(date){
+  const exs=allEntrenos.filter(r=>r.fecha===date);
+  if(!exs.length){document.getElementById('sessionDetail').innerHTML='<div class="glass p-16"><div class="empty">Sin sesión este día</div></div>';return;}
+  const grupos=[...new Set(exs.map(r=>r.grupo_muscular))];
+  document.getElementById('sessionDetail').innerHTML=`
+    <div class="glass p-16">
+      <div class="row-between" style="margin-bottom:14px">
+        <div style="font-size:15px;font-weight:600">${dayName(date)} · ${fmtDate(date)}</div>
+        <span style="font-size:11px;background:rgba(37,99,235,0.2);color:var(--blue2);padding:3px 10px;border-radius:20px;border:0.5px solid rgba(96,165,250,0.3)">${grupos.join(' / ')}</span>
+      </div>
+      ${buildSessionTable(exs)}
+    </div>`;
+}
+
+/* STATS */
+function renderStatsCharts(){
+  if(statsChartsDone)return;
+  statsChartsDone=true;
+  const data=allEntrenos;
+  const st=calcStreaks(data);
+  document.getElementById('siCurrent').textContent=st.current;
+  document.getElementById('siLast').textContent=st.last;
+  document.getElementById('siBest').textContent=st.best;
+  document.getElementById('statTotalSessions').textContent=[...new Set(data.map(r=>r.fecha))].length;
+
+  const withW=data.filter(r=>parseW(r.peso_corporal));
+  if(withW.length){
+    const latest=parseW(withW[0].peso_corporal);
+    const oldest=parseW(withW[withW.length-1].peso_corporal);
+    document.getElementById('statWeight').textContent=latest.toFixed(1);
+    const delta=(latest-oldest).toFixed(1);
+    document.getElementById('statWeightDelta').textContent=(+delta>0?'+':'')+delta+' kg total';
+    const talla=profile.talla?+profile.talla:180;
+    document.getElementById('statTalla').textContent=talla;
+    document.getElementById('statIMC').textContent='IMC '+(latest/(talla/100*talla/100)).toFixed(1);
+    const we=withW.slice(0,12).reverse();
+    new Chart(document.getElementById('weightStatsChart'),{
+      type:'line',data:{labels:we.map(r=>r.fecha.slice(5).replace('-','/')),datasets:[{data:we.map(r=>parseW(r.peso_corporal)),borderColor:'#3b82f6',borderWidth:2,pointBackgroundColor:'#3b82f6',pointRadius:3,tension:0.4,fill:true,backgroundColor:'rgba(59,130,246,0.07)'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#4a6499',font:{size:10}},grid:{display:false},border:{display:false}},y:{ticks:{color:'#4a6499',font:{size:10},callback:v=>v.toFixed(1)},grid:{color:'rgba(59,130,246,0.06)'},border:{display:false}}}}
+    });
+  }
+  if(profile.vo2)document.getElementById('statVO2').textContent=profile.vo2;
+
+  const volMap={};
+  data.forEach(r=>{volMap[r.grupo_muscular]=(volMap[r.grupo_muscular]||0)+(r.total_repeticiones||0)});
+  const ve=Object.entries(volMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  new Chart(document.getElementById('volumeChart'),{
+    type:'bar',data:{labels:ve.map(e=>e[0]),datasets:[{data:ve.map(e=>e[1]),backgroundColor:'rgba(59,130,246,0.45)',borderColor:'rgba(96,165,250,0.7)',borderWidth:1,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#4a6499',font:{size:10},autoSkip:false,maxRotation:30},grid:{display:false},border:{display:false}},y:{ticks:{color:'#4a6499',font:{size:10}},grid:{color:'rgba(59,130,246,0.06)'},border:{display:false}}}}
+  });
+}
+
+/* RUNNING */
+function renderRunning(){
+  const data=allRunning;
+  if(!data.length){
+    document.getElementById('runSubtitle').textContent='Sin salidas registradas';
+    document.getElementById('runTopStats').innerHTML='<div class="empty" style="grid-column:1/-1">Sin datos de running</div>';
+    document.getElementById('runLogTbody').innerHTML='<tr><td colspan="5"><div class="empty">Sin datos</div></td></tr>';
+    document.getElementById('runStreakNum').textContent='0';
+    document.getElementById('runTotalRuns').textContent='0';
+    document.getElementById('runTotalKm').textContent='0';
+    return;
+  }
+  document.getElementById('runSubtitle').textContent=data.length+' salidas registradas';
+  const maxDist=Math.max(...data.map(r=>+r.distancia));
+  const maxR=data.find(r=>+r.distancia===maxDist);
+  const bestVO2=Math.max(...data.map(r=>+r.vo2_max).filter(Boolean));
+  function ps(p){if(!p)return 99999;const a=p.split(':');return+a[0]*60+(+a[1]||0)}
+  const bestMed=data.map(r=>r.pace_medio).filter(Boolean).reduce((b,p)=>ps(p)<ps(b)?p:b,'99:99');
+  const bestFast=data.map(r=>r.pace_faster).filter(Boolean).reduce((b,p)=>ps(p)<ps(b)?p:b,'99:99');
+
+  document.getElementById('runTopStats').innerHTML=`
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-map-pin" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Distancia max</div><div><span class="stat-val">${maxDist}</span><span class="stat-unit"> km</span></div><div class="label" style="margin-top:4px">${fmtDate(maxR.fecha)}</div></div>
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-heart-rate-monitor" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>VO2 Max</div><div><span class="stat-val">${bestVO2||'—'}</span><span class="stat-unit"> ml</span></div><div class="label" style="margin-top:4px">mejor registrado</div></div>
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-run" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Mejor pace medio</div><div><span class="stat-val">${bestMed==='99:99'?'—':bestMed}</span><span class="stat-unit"> /km</span></div></div>
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-bolt" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Pace más rápido</div><div><span class="stat-val">${bestFast==='99:99'?'—':bestFast}</span><span class="stat-unit"> /km</span></div></div>`;
+
+  const cd=data.slice(0,10).reverse();
+  document.getElementById('runChartSub').textContent='Últimas '+cd.length+' salidas';
+  new Chart(document.getElementById('runKmChart'),{
+    type:'bar',
+    data:{labels:cd.map(r=>r.fecha.slice(5).replace('-','/')),datasets:[{data:cd.map(r=>+r.distancia),backgroundColor:cd.map(r=>+r.distancia>=15?'rgba(239,68,68,0.7)':'rgba(239,68,68,0.35)'),borderColor:'rgba(248,113,113,0.6)',borderWidth:1,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>{const r=cd[c.dataIndex];return[c.parsed.y+' km','Tiempo: '+r.tiempo,'Pace: '+(r.pace_medio||'—')+'/km']}}}},scales:{x:{ticks:{color:'#6b3a3a',font:{size:10},maxRotation:0},grid:{display:false},border:{display:false}},y:{ticks:{color:'#6b3a3a',font:{size:10},callback:v=>v+'k'},grid:{color:'rgba(239,68,68,0.06)'},border:{display:false}}}}
+  });
+
+  const rs=calcStreaks(data);
+  document.getElementById('runStreakNum').textContent=rs.current;
+  buildDots('runStreakDots',rs.current,Math.max(rs.current+3,10),true);
+  document.getElementById('runTotalRuns').textContent=data.length;
+  document.getElementById('runTotalKm').textContent=data.reduce((s,r)=>s+(+r.distancia||0),0).toFixed(1);
+
+  const tbody=document.getElementById('runLogTbody');
+  tbody.innerHTML='';
+  data.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="color:var(--text2)">${fmtDate(r.fecha)}</td><td>${r.distancia}</td><td>${r.tiempo}</td><td style="color:var(--red2)">${r.pace_medio||'—'}</td><td style="color:var(--text3)">${r.vo2_max||'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ADD SESSION */
+let exCount=0;
+function openAddModal(){
+  document.getElementById('addFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('addGrupo').value='';
+  document.getElementById('addPesoCorp').value='';
+  document.getElementById('exerciseEntries').innerHTML='';
+  document.getElementById('saveStatus').textContent='';
+  exCount=0;addExerciseEntry();
+  document.getElementById('addModal').classList.add('open');
+}
+function closeAddModal(){document.getElementById('addModal').classList.remove('open')}
+function addExerciseEntry(){
+  exCount++;const id='ex'+exCount;
+  const div=document.createElement('div');
+  div.className='exercise-entry';div.id=id;
+  div.innerHTML=`
+    ${exCount>1?`<button class="btn-remove-ex" onclick="document.getElementById('${id}').remove()"><i class="ti ti-x"></i></button>`:''}
+    <div class="field-group" style="margin-bottom:8px"><label class="field-label">Ejercicio</label><input type="text" class="field-input" placeholder="Press de banca..." data-field="ejercicio"></div>
+    <div class="field-row">
+      <div class="field-group" style="margin-bottom:8px"><label class="field-label">Peso</label><input type="text" class="field-input" placeholder="80 kg" data-field="peso"></div>
+      <div class="field-group" style="margin-bottom:8px"><label class="field-label">Series</label><input type="number" class="field-input" placeholder="4" min="1" data-field="series"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group" style="margin-bottom:0"><label class="field-label">Reps (ej: 10;9;8)</label><input type="text" class="field-input" placeholder="10;10;10;9" data-field="repeticiones"></div>
+      <div class="field-group" style="margin-bottom:0"><label class="field-label">Total reps</label><input type="number" class="field-input" placeholder="39" data-field="total_repeticiones"></div>
+    </div>`;
+  document.getElementById('exerciseEntries').appendChild(div);
+}
+async function saveSession(){
+  const fecha=document.getElementById('addFecha').value;
+  const grupo=document.getElementById('addGrupo').value.trim();
+  const pesoCorp=document.getElementById('addPesoCorp').value.trim();
+  if(!fecha||!grupo){document.getElementById('saveStatus').textContent='Completa fecha y grupo muscular';return}
+  const entries=document.querySelectorAll('#exerciseEntries .exercise-entry');
+  const rows=[];
+  for(const e of entries){
+    const g=f=>e.querySelector(`[data-field="${f}"]`).value.trim();
+    if(!g('ejercicio'))continue;
+    rows.push({fecha,grupo_muscular:grupo,ejercicio:g('ejercicio'),peso:g('peso')||null,series:parseInt(g('series'))||null,repeticiones:g('repeticiones')||null,total_repeticiones:parseInt(g('total_repeticiones'))||null,peso_corporal:pesoCorp||null,notas:null});
+  }
+  if(!rows.length){document.getElementById('saveStatus').textContent='Añade al menos un ejercicio';return}
+  const btn=document.getElementById('btnSaveSession');
+  btn.disabled=true;document.getElementById('saveStatus').textContent='Guardando...';
+  const ok=await sbPost('entrenamientos',rows);
+  if(ok){
+    document.getElementById('saveStatus').textContent='✓ Sesión guardada';
+    setTimeout(async()=>{
+      closeAddModal();
+      allEntrenos=await sbGet('entrenamientos',{order:'fecha.desc,created_at.desc',select:'*'});
+      statsChartsDone=false;
+      renderGymHome();buildSessionWeek();
+    },700);
+  }else{document.getElementById('saveStatus').textContent='Error al guardar. Intenta de nuevo.';}
+  btn.disabled=false;
+}
+
+/* INIT */
+async function init(){
+  loadProfile();applyProfile();
+  const[entrenos,running]=await Promise.all([
+    sbGet('entrenamientos',{order:'fecha.desc,created_at.desc',select:'*'}),
+    sbGet('running',{order:'fecha.desc',select:'*'})
+  ]);
+  allEntrenos=entrenos||[];
+  const seen=new Set();
+  allRunning=(running||[]).filter(r=>{const k=r.fecha+'|'+r.distancia;if(seen.has(k))return false;seen.add(k);return true;});
+  renderGymHome();buildSessionWeek();renderRunning();
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
