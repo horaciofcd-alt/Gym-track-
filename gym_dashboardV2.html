@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Training Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #060b18;
+    --surface: rgba(10,20,50,0.55);
+    --surface2: rgba(15,30,70,0.45);
+    --glass: rgba(20,50,120,0.22);
+    --glass-border: rgba(80,140,255,0.18);
+    --glass-border2: rgba(80,140,255,0.08);
+    --blue: #3b82f6;
+    --blue2: #60a5fa;
+    --blue3: #93c5fd;
+    --red: #ef4444;
+    --red2: #f87171;
+    --accent: #2563eb;
+    --text: #f0f4ff;
+    --text2: #8ba4d4;
+    --text3: #4a6499;
+    --run-bg: #110608;
+    --run-surface: rgba(50,10,10,0.55);
+    --run-glass: rgba(120,20,20,0.22);
+    --run-border: rgba(255,80,80,0.18);
+    --run-accent: #dc2626;
+    --run-accent2: #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG glow orbs */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -120px; left: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px; right: -60px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(239,68,68,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* SLIDE CONTAINER */
+  .slides-wrapper {
+    display: flex;
+    width: 200%;
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    z-index: 1;
+  }
+  .slides-wrapper.run-mode { transform: translateX(-50%); }
+
+  .slide {
+    width: 50%;
+    min-height: 100vh;
+    padding: 0 16px 100px;
+  }
+
+  /* PAGE SWITCHER */
+  .mode-switcher {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    background: rgba(10,20,50,0.7);
+    backdrop-filter: blur(16px);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .mode-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text2);
+    background: transparent;
+    border: none;
+    transition: all 0.3s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mode-btn.active { color: #fff; background: rgba(37,99,235,0.4); }
+  .mode-btn.run-active { color: #fff; background: rgba(220,38,38,0.4); }
+
+  /* GLASS CARD */
+  .glass {
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .glass::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(120,180,255,0.4), transparent);
+  }
+
+  .glass-sm {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    border: 0.5px solid var(--glass-border2);
+    border-radius: 14px;
+  }
+
+  /* TYPOGRAPHY */
+  .big-num {
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: #fff;
+  }
+  .big-unit { font-size: 20px; font-weight: 400; color: var(--text2); }
+  .label { font-size: 12px; color: var(--text3); font-weight: 400; letter-spacing: 0.3px; }
+  .label-sm { font-size: 11px; color: var(--text3); }
+
+  /* NAVIGATION TABS */
+  .nav-tabs {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 480px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(6,11,24,0.85);
+    backdrop-filter: blur(24px);
+    border-top: 0.5px solid var(--glass-border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 20px;
+    z-index: 50;
+    transition: background 0.5s;
+  }
+  .nav-tabs.run-mode { background: rgba(17,6,8,0.88); border-top-color: rgba(255,80,80,0.18); }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab i { font-size: 22px; }
+  .tab.active { color: var(--blue2); }
+  .tab.run-active { color: var(--red2); }
+
+  /* SECTION */
+  .section { display: none; padding-top: 24px; }
+  .section.visible { display: block; }
+
+  /* HEADER */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 56px 0 20px;
+  }
+  .page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+  .icon-btn {
+    width: 38px; height: 38px;
+    background: var(--glass);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+  }
+  .icon-btn i { font-size: 18px; color: var(--blue2); }
+
+  /* DAY PILLS */
+  .day-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .day-row::-webkit-scrollbar { display: none; }
+  .day-pill {
+    flex: 0 0 auto;
+    min-width: 46px;
+    text-align: center;
+    padding: 8px 6px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--glass);
+    border: 0.5px solid var(--glass-border2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .day-pill .d-name { font-weight: 600; font-size: 12px; color: var(--text2); display: block; }
+  .day-pill .d-date { display: block; margin-top: 2px; font-size: 10px; }
+  .day-pill .d-muscle { display: block; margin-top: 4px; font-size: 9px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 44px; }
+  .day-pill.active {
+    background: rgba(37,99,235,0.3);
+    border-color: rgba(96,165,250,0.5);
+    color: var(--blue3);
+  }
+  .day-pill.active .d-name { color: var(--blue2); }
+  .day-pill.active .d-muscle { color: var(--blue3); }
+
+  /* SESSION DETAIL */
+  .session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .session-title { font-size: 16px; font-weight: 600; }
+  .session-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(37,99,235,0.2);
+    color: var(--blue2);
+    border: 0.5px solid rgba(96,165,250,0.3);
+  }
+
+  .exercise-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .exercise-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text3);
+    padding: 0 8px 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .exercise-table th:not(:first-child) { text-align: center; }
+  .exercise-table td {
+    padding: 10px 8px;
+    border-top: 0.5px solid rgba(80,140,255,0.08);
+  }
+  .exercise-table td:not(:first-child) { text-align: center; color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; }
+  .exercise-name { font-weight: 500; color: var(--text); font-size: 13px; }
+  .exercise-muscle { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  /* STAT CARDS */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    padding: 14px;
+  }
+  .stat-val { font-size: 26px; font-weight: 700; letter-spacing: -1px; color: #fff; }
+  .stat-unit { font-size: 13px; color: var(--text2); font-weight: 400; }
+
+  /* STREAK */
+  .streak-card {
+    padding: 18px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .streak-num {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, var(--blue2), var(--red2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .streak-dots {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    max-width: 140px;
+    justify-content: flex-end;
+  }
+  .streak-dot {
+    width: 12px; height: 12px;
+    border-radius: 4px;
+    background: var(--glass);
+    border: 0.5px solid var(--glass-border2);
+  }
+  .streak-dot.done { background: var(--blue); border-color: var(--blue2); }
+  .streak-dot.current { background: var(--red); border-color: var(--red2); }
+
+  /* PROGRESS BAR */
+  .prog-bar {
+    height: 4px;
+    background: rgba(80,140,255,0.12);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--blue2));
+  }
+
+  /* CHART */
+  .chart-wrap { position: relative; }
+
+  /* -------- RUNNING SLIDE -------- */
+  .slide-run { background: var(--run-bg); }
+
+  .slide-run body { background: var(--run-bg); }
+
+  .glass-run {
+    background: var(--run-surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid var(--run-border);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .glass-run::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,120,120,0.4), transparent);
+  }
+
+  .glass-run-sm {
+    background: var(--run-glass);
+    backdrop-filter: blur(12px);
+    border: 0.5px solid rgba(255,80,80,0.1);
+    border-radius: 14px;
+  }
+
+  .run-streak-num {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, var(--red2), #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .run-streak-dot { width: 12px; height: 12px; border-radius: 4px; background: rgba(239,68,68,0.15); border: 0.5px solid rgba(255,80,80,0.15); }
+  .run-streak-dot.done { background: var(--red); border-color: var(--red2); }
+  .run-streak-dot.current { background: #f59e0b; border-color: #fbbf24; }
+
+  .prog-fill-run { background: linear-gradient(90deg, var(--red), var(--red2)); }
+  .prog-bar-run { height: 4px; background: rgba(255,80,80,0.12); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+
+  .run-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    background: rgba(220,38,38,0.2); color: var(--red2);
+    border: 0.5px solid rgba(248,113,113,0.3);
+  }
+
+  .run-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  /* RACE TABLE */
+  .race-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 0.5px solid rgba(255,80,80,0.08);
+  }
+  .race-row:last-child { border-bottom: none; }
+  .race-name { font-size: 14px; font-weight: 600; }
+  .race-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .race-time { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--red2); }
+  .race-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    background: rgba(220,38,38,0.15); color: var(--red2);
+    display: inline-block; margin-top: 3px;
+  }
+
+  /* RUN LOG TABLE */
+  .run-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .run-table th { text-align: left; font-size: 10px; font-weight: 500; color: var(--text3); padding: 0 6px 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .run-table th:not(:first-child) { text-align: right; }
+  .run-table td { padding: 9px 6px; border-top: 0.5px solid rgba(255,80,80,0.07); }
+  .run-table td:not(:first-child) { text-align: right; font-family: 'DM Mono', monospace; color: var(--text2); font-size: 11px; }
+
+  /* MISC */
+  .row-between { display: flex; justify-content: space-between; align-items: center; }
+  .gap-8 { gap: 8px; }
+  .mb-14 { margin-bottom: 14px; }
+  .mb-20 { margin-bottom: 20px; }
+  .p-16 { padding: 16px; }
+  .p-18 { padding: 18px; }
+
+  .blue-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); display: inline-block; }
+  .red-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); display: inline-block; }
+
+  .tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px; display: inline-block;
+    background: rgba(37,99,235,0.15); color: var(--blue2);
+    border: 0.5px solid rgba(96,165,250,0.2);
+  }
+
+  @media (max-width: 480px) {
+    .slide { padding: 0 12px 100px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MODE SWITCHER -->
+<div class="mode-switcher" id="modeSwitcher">
+  <button class="mode-btn active" id="btnGym" onclick="setMode('gym')">
+    <i class="ti ti-barbell" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Gym
+  </button>
+  <button class="mode-btn" id="btnRun" onclick="setMode('run')">
+    <i class="ti ti-run" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Running
+  </button>
+</div>
+
+<!-- SLIDES -->
+<div class="slides-wrapper" id="slidesWrapper">
+
+  <!-- ===== GYM SLIDE ===== -->
+  <div class="slide" id="slideGym">
+
+    <!-- SECTION: HOME -->
+    <div class="section visible" id="sec-home">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Workouts</div>
+          <div class="page-sub">Mayo 2026</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="icon-btn"><i class="ti ti-adjustments-horizontal"></i></div>
+          <div class="icon-btn"><i class="ti ti-plus"></i></div>
+        </div>
+      </div>
+
+      <!-- Day pills -->
+      <div class="day-row" id="dayRowHome"></div>
+
+      <!-- Weight hero -->
+      <div class="glass p-18 mb-14">
+        <div class="row-between">
+          <div>
+            <div style="margin-bottom:6px"><span class="big-num" id="homeWeight">84.6</span><span class="big-unit"> kg</span></div>
+            <div class="label">Peso corporal</div>
+            <div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.12);border:0.5px solid rgba(16,185,129,0.25);border-radius:20px;padding:3px 10px">
+              <i class="ti ti-trending-down" style="font-size:13px;color:#34d399"></i>
+              <span style="font-size:12px;color:#34d399">−0.4 kg esta semana</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="label" style="margin-bottom:6px">Meta</div>
+            <div style="font-size:22px;font-weight:700;color:var(--blue2)">80 kg</div>
+            <div class="prog-bar" style="width:90px;margin-top:8px"><div class="prog-fill" style="width:58%"></div></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">58% completado</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:80px;margin-top:14px">
+          <canvas id="weightMiniChart" role="img" aria-label="Progreso peso semanal">Peso bajando de 86 a 84.6 kg</canvas>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="stat-grid">
+        <div class="glass-sm stat-card">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-flame" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Sesiones</div>
+          <div><span class="stat-val">4</span><span class="stat-unit"> /sem</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:80%"></div></div>
+        </div>
+        <div class="glass-sm stat-card">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-clock" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Tiempo</div>
+          <div><span class="stat-val">3h</span><span class="stat-unit"> 20m</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:65%"></div></div>
+        </div>
+      </div>
+
+      <!-- Streak -->
+      <div class="glass streak-card mb-14">
+        <div>
+          <div class="label mb-14">Racha activa</div>
+          <div class="streak-num">7</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">semanas seguidas</div>
+        </div>
+        <div>
+          <div class="streak-dots" id="streakDotsHome"></div>
+          <div style="font-size:10px;color:var(--text3);text-align:right;margin-top:6px">Ú12 semanas</div>
+        </div>
+      </div>
+
+      <!-- Active routines -->
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Rutinas activas</div>
+        <div style="font-size:12px;color:var(--blue2)">Ver todas</div>
+      </div>
+      <div class="glass p-16 mb-14">
+        <div class="row-between" style="margin-bottom:12px">
+          <div>
+            <div style="font-size:15px;font-weight:600">PPL Routine</div>
+            <div class="label" style="margin-top:2px">Push · Pull · Legs</div>
+          </div>
+          <div style="font-size:11px;background:rgba(37,99,235,0.15);color:var(--blue2);padding:4px 10px;border-radius:20px;border:0.5px solid rgba(96,165,250,0.25)">3 días</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:6px"><span>Progreso semanal</span><span>2 / 3</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:66%"></div></div>
+      </div>
+      <div class="glass p-16 mb-14">
+        <div class="row-between">
+          <div>
+            <div style="font-size:15px;font-weight:600">Pull Day</div>
+            <div class="label" style="margin-top:2px">Hoy · Viernes</div>
+          </div>
+          <div style="font-size:11px;background:rgba(239,68,68,0.12);color:var(--red2);padding:4px 10px;border-radius:20px;border:0.5px solid rgba(248,113,113,0.25)">Pendiente</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag">Jalones</span>
+          <span class="tag">Remo</span>
+          <span class="tag">Curl</span>
+          <span class="tag">Face pull</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: LAST SESSION -->
+    <div class="section" id="sec-session">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Última sesión</div>
+          <div class="page-sub">Selecciona un día</div>
+        </div>
+      </div>
+
+      <div class="day-row" id="dayRowSession"></div>
+
+      <div class="glass p-16 mb-14" id="sessionDetail">
+        <div class="session-header">
+          <div>
+            <div class="session-title" id="sessionTitle">Push Day — Lunes</div>
+            <div class="label" style="margin-top:3px" id="sessionDate">26 Mayo 2026</div>
+          </div>
+          <div class="session-badge" id="sessionMuscle">Pecho / Hombro</div>
+        </div>
+        <table class="exercise-table" id="exerciseTable">
+          <thead>
+            <tr>
+              <th>Ejercicio</th>
+              <th>Peso</th>
+              <th>Series</th>
+              <th>Reps</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="exerciseTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION: STATS -->
+    <div class="section" id="sec-stats">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Stats</div>
+          <div class="page-sub">Tu progreso</div>
+        </div>
+      </div>
+
+      <div class="stat-grid mb-14">
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-flame" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Sesiones</div>
+          <div><span class="stat-val">48</span></div>
+          <div class="label" style="margin-top:4px">este año</div>
+        </div>
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-scale" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Peso</div>
+          <div><span class="stat-val">84.6</span><span class="stat-unit"> kg</span></div>
+          <div class="label" style="margin-top:4px">−4.2 kg desde enero</div>
+        </div>
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-ruler" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Talla</div>
+          <div><span class="stat-val">180</span><span class="stat-unit"> cm</span></div>
+          <div class="label" style="margin-top:4px">IMC 26.1</div>
+        </div>
+        <div class="glass stat-card">
+          <div class="label" style="margin-bottom:8px"><i class="ti ti-calendar-check" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Racha</div>
+          <div class="streak-num" style="font-size:32px">7</div>
+          <div class="label" style="margin-top:4px">semanas</div>
+        </div>
+      </div>
+
+      <!-- Streak detail -->
+      <div class="glass p-18 mb-14">
+        <div class="row-between" style="margin-bottom:14px">
+          <div style="font-size:15px;font-weight:600">Racha de entrenamiento</div>
+          <div style="font-size:11px;color:var(--blue2)">7 semanas</div>
+        </div>
+        <div class="streak-dots" id="streakDotsStats" style="max-width:100%;justify-content:flex-start;gap:8px"></div>
+        <div style="display:flex;gap:12px;margin-top:12px;font-size:11px;color:var(--text3)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--blue);margin-right:4px;vertical-align:middle"></span>Entrenado</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--red);margin-right:4px;vertical-align:middle"></span>Semana actual</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(80,140,255,0.1);margin-right:4px;vertical-align:middle"></span>Sin datos</span>
+        </div>
+      </div>
+
+      <!-- Weight chart -->
+      <div class="row-between mb-14" style="margin-top:4px">
+        <div style="font-size:15px;font-weight:600">Progresión de peso</div>
+        <div style="font-size:11px;color:var(--text2)">Último mes</div>
+      </div>
+      <div class="glass p-16 mb-14">
+        <div class="chart-wrap" style="height:160px">
+          <canvas id="weightStatsChart" role="img" aria-label="Progresión de peso corporal último mes">Peso corporal bajando de 88 a 84.6 kg</canvas>
+        </div>
+      </div>
+
+      <!-- Volume chart -->
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Volumen por grupo muscular</div>
+      </div>
+      <div class="glass p-16 mb-14">
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="volumeChart" role="img" aria-label="Volumen por grupo muscular">Pecho, espalda, piernas, hombros, brazos</canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /slideGym -->
+
+  <!-- ===== RUNNING SLIDE ===== -->
+  <div class="slide slide-run" id="slideRun">
+
+    <!-- SECTION: RUN HOME -->
+    <div class="section visible" id="sec-run-home">
+      <div class="page-header">
+        <div>
+          <div class="page-title" style="color:#fff">Running</div>
+          <div class="page-sub">Tu historial de carreras</div>
+        </div>
+        <div class="icon-btn" style="border-color:rgba(255,80,80,0.25);background:var(--run-glass)">
+          <i class="ti ti-plus" style="color:var(--red2)"></i>
+        </div>
+      </div>
+
+      <!-- Top 4 stats -->
+      <div class="run-stat-grid">
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-map-pin" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Distancia max</div>
+          <div><span class="stat-val">21.1</span><span class="stat-unit"> km</span></div>
+          <div class="label" style="margin-top:4px">14 Abr · Media</div>
+        </div>
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-heart-rate-monitor" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>VO2 Max</div>
+          <div><span class="stat-val">48</span><span class="stat-unit"> ml</span></div>
+          <div class="label" style="margin-top:4px">Estimado Garmin</div>
+        </div>
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-run" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Best pace</div>
+          <div><span class="stat-val">4:38</span><span class="stat-unit"> /km</span></div>
+          <div class="label" style="margin-top:4px">Avg mejores 5 runs</div>
+        </div>
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px"><i class="ti ti-bolt" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Pace más rápido</div>
+          <div><span class="stat-val">3:52</span><span class="stat-unit"> /km</span></div>
+          <div class="label" style="margin-top:4px">Sprint 1 km — Mar</div>
+        </div>
+      </div>
+
+      <!-- KM progression chart -->
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Progresión de km</div>
+        <div style="font-size:11px;color:var(--text3)">Ú 8 salidas</div>
+      </div>
+      <div class="glass-run p-16 mb-14">
+        <div class="chart-wrap" style="height:160px">
+          <canvas id="runKmChart" role="img" aria-label="Progresión de kilómetros por salida">Corridas entre 5 y 21 km</canvas>
+        </div>
+      </div>
+
+      <!-- Run streak -->
+      <div class="glass-run p-18 mb-14">
+        <div class="row-between">
+          <div>
+            <div class="label" style="margin-bottom:6px">Racha running</div>
+            <div class="run-streak-num">5</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px">semanas seguidas</div>
+          </div>
+          <div>
+            <div class="streak-dots" id="runStreakDots" style="max-width:120px;justify-content:flex-end"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: RACES -->
+    <div class="section" id="sec-races">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Carreras</div>
+          <div class="page-sub">Historial oficial</div>
+        </div>
+        <div class="icon-btn" style="border-color:rgba(255,80,80,0.25);background:var(--run-glass)">
+          <i class="ti ti-plus" style="color:var(--red2)"></i>
+        </div>
+      </div>
+
+      <div class="run-stat-grid" style="margin-bottom:14px">
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px">Carreras</div>
+          <div class="stat-val">12</div>
+          <div class="label" style="margin-top:4px">totales</div>
+        </div>
+        <div class="glass-run p-16">
+          <div class="label" style="margin-bottom:6px">Distancia total</div>
+          <div><span class="stat-val">183</span><span class="stat-unit"> km</span></div>
+          <div class="label" style="margin-top:4px">en carreras</div>
+        </div>
+      </div>
+
+      <div class="glass-run p-16 mb-14">
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;letter-spacing:0.3px">HISTORIAL</div>
+        <div id="raceList"></div>
+      </div>
+
+      <!-- Weekly streak -->
+      <div class="glass-run p-18 mb-14">
+        <div class="row-between" style="margin-bottom:14px">
+          <div style="font-size:15px;font-weight:600">Racha semanal</div>
+          <div style="font-size:11px;color:var(--red2)">5 semanas</div>
+        </div>
+        <div class="streak-dots" id="runStreakDotsRaces" style="max-width:100%;justify-content:flex-start;gap:8px"></div>
+      </div>
+
+      <!-- Run log -->
+      <div class="row-between mb-14">
+        <div style="font-size:15px;font-weight:600">Log de salidas</div>
+      </div>
+      <div class="glass-run p-16 mb-14">
+        <table class="run-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Km</th>
+              <th>Tiempo</th>
+              <th>Pace</th>
+            </tr>
+          </thead>
+          <tbody id="runLogTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /slideRun -->
+
+</div><!-- /slides-wrapper -->
+
+<!-- GYM NAV -->
+<nav class="nav-tabs" id="gymNav">
+  <button class="tab active" id="tab-home" onclick="showGymSection('home')">
+    <i class="ti ti-home"></i>Inicio
+  </button>
+  <button class="tab" id="tab-session" onclick="showGymSection('session')">
+    <i class="ti ti-calendar-event"></i>Sesión
+  </button>
+  <button class="tab" id="tab-stats" onclick="showGymSection('stats')">
+    <i class="ti ti-chart-line"></i>Stats
+  </button>
+</nav>
+
+<!-- RUN NAV -->
+<nav class="nav-tabs" id="runNav" style="display:none">
+  <button class="tab run-active" id="tab-run-home" onclick="showRunSection('run-home')">
+    <i class="ti ti-home"></i>Inicio
+  </button>
+  <button class="tab" id="tab-races" onclick="showRunSection('races')">
+    <i class="ti ti-trophy"></i>Carreras
+  </button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* =================== DATA =================== */
+const weekDays = [
+  { name:'Lun', date:'26 May', muscle:'Push', exercises:[
+    {name:'Press banca', muscle:'Pecho', peso:80, series:4, reps:8, total:32},
+    {name:'Press inclinado', muscle:'Pecho', peso:60, series:3, reps:10, total:30},
+    {name:'Aperturas', muscle:'Pecho', peso:16, series:3, reps:12, total:36},
+    {name:'Press militar', muscle:'Hombro', peso:50, series:4, reps:8, total:32},
+    {name:'Elevaciones lat.', muscle:'Hombro', peso:12, series:4, reps:15, total:60},
+    {name:'Fondos', muscle:'Tríceps', peso:0, series:3, reps:12, total:36},
+  ]},
+  { name:'Mar', date:'27 May', muscle:'Pull', exercises:[
+    {name:'Dominadas', muscle:'Espalda', peso:0, series:4, reps:8, total:32},
+    {name:'Jalón al pecho', muscle:'Espalda', peso:65, series:4, reps:10, total:40},
+    {name:'Remo con barra', muscle:'Espalda', peso:70, series:3, reps:8, total:24},
+    {name:'Curl barra', muscle:'Bíceps', peso:35, series:3, reps:12, total:36},
+    {name:'Curl martillo', muscle:'Bíceps', peso:14, series:3, reps:12, total:36},
+    {name:'Face pull', muscle:'Espalda', peso:25, series:3, reps:15, total:45},
+  ]},
+  { name:'Mié', date:'28 May', muscle:'Legs', exercises:[
+    {name:'Sentadilla', muscle:'Cuádríceps', peso:100, series:4, reps:8, total:32},
+    {name:'Prensa', muscle:'Cuádríceps', peso:160, series:4, reps:10, total:40},
+    {name:'Extensión', muscle:'Cuádríceps', peso:50, series:3, reps:15, total:45},
+    {name:'Curl femoral', muscle:'Isquios', peso:45, series:3, reps:12, total:36},
+    {name:'Hip thrust', muscle:'Glúteo', peso:90, series:4, reps:10, total:40},
+    {name:'Gemelos', muscle:'Pantorrilla', peso:60, series:4, reps:20, total:80},
+  ]},
+  { name:'Jue', date:'29 May', muscle:'Rest', exercises:[]},
+  { name:'Vie', date:'30 May', muscle:'Pull', exercises:[
+    {name:'Jalón agarre cerrado', muscle:'Espalda', peso:60, series:4, reps:10, total:40},
+    {name:'Remo en máquina', muscle:'Espalda', peso:55, series:3, reps:12, total:36},
+    {name:'Pullover', muscle:'Espalda', peso:20, series:3, reps:12, total:36},
+    {name:'Curl predicador', muscle:'Bíceps', peso:30, series:3, reps:10, total:30},
+  ]},
+  { name:'Sáb', date:'31 May', muscle:'Push', exercises:[]},
+  { name:'Dom', date:'1 Jun', muscle:'Legs', exercises:[]},
+];
+
+const streakWeeks = 7;
+const totalWeeks = 12;
+
+const racesData = [
+  {name:'Media Maratón Lima', dist:'21.1 km', date:'14 Abr 2026', time:'1:52:34', pr:true},
+  {name:'10K Miraflores', dist:'10 km', date:'15 Feb 2026', time:'46:22', pr:false},
+  {name:'10K Parque Kennedy', dist:'10 km', date:'10 Nov 2025', time:'47:10', pr:false},
+  {name:'5K San Isidro', dist:'5 km', date:'5 Sep 2025', time:'22:14', pr:true},
+  {name:'Media Maratón Lima', dist:'21.1 km', date:'20 Jul 2025', time:'1:58:01', pr:false},
+];
+
+const runLog = [
+  {date:'29 May', km:8.5, tiempo:'48:12', pace:'5:40'},
+  {date:'26 May', km:12.0, tiempo:'1:04:30', pace:'5:22'},
+  {date:'22 May', km:6.0, tiempo:'32:18', pace:'5:23'},
+  {date:'19 May', km:15.0, tiempo:'1:18:45', pace:'5:15'},
+  {date:'15 May', km:10.0, tiempo:'51:20', pace:'5:08'},
+  {date:'12 May', km:8.0, tiempo:'44:00', pace:'5:30'},
+  {date:'8 May', km:18.0, tiempo:'1:35:00', pace:'5:17'},
+  {date:'5 May', km:21.1, tiempo:'1:52:34', pace:'5:20'},
+];
+
+/* =================== MODE =================== */
+let currentMode = 'gym';
+let currentGymSection = 'home';
+let currentRunSection = 'run-home';
+let selectedDay = 0;
+
+function setMode(mode) {
+  currentMode = mode;
+  const wrapper = document.getElementById('slidesWrapper');
+  const gymNav = document.getElementById('gymNav');
+  const runNav = document.getElementById('runNav');
+  const btnGym = document.getElementById('btnGym');
+  const btnRun = document.getElementById('btnRun');
+
+  if (mode === 'run') {
+    wrapper.classList.add('run-mode');
+    gymNav.style.display = 'none';
+    runNav.style.display = 'flex';
+    runNav.classList.add('run-mode');
+    btnGym.classList.remove('active');
+    btnRun.classList.remove('active');
+    btnRun.classList.add('run-active');
+    document.body.style.background = 'var(--run-bg)';
+  } else {
+    wrapper.classList.remove('run-mode');
+    gymNav.style.display = 'flex';
+    runNav.style.display = 'none';
+    btnRun.classList.remove('run-active');
+    btnGym.classList.add('active');
+    document.body.style.background = 'var(--bg)';
+  }
+}
+
+/* =================== NAV =================== */
+function showGymSection(name) {
+  ['home','session','stats'].forEach(s => {
+    document.getElementById('sec-' + s).classList.toggle('visible', s === name);
+    document.getElementById('tab-' + s).classList.toggle('active', s === name);
+  });
+  currentGymSection = name;
+  if (name === 'stats') renderStatsCharts();
+}
+
+function showRunSection(name) {
+  ['run-home','races'].forEach(s => {
+    document.getElementById('sec-' + s).classList.toggle('visible', s === name);
+  });
+  document.getElementById('tab-run-home').classList.toggle('run-active', name === 'run-home');
+  document.getElementById('tab-run-home').classList.toggle('tab', true);
+  document.getElementById('tab-races').classList.toggle('run-active', name === 'races');
+  currentRunSection = name;
+}
+
+/* =================== DAY PILLS =================== */
+function buildDayPills(containerId, onSelect) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  weekDays.forEach((d, i) => {
+    const el = document.createElement('div');
+    el.className = 'day-pill' + (i === selectedDay ? ' active' : '');
+    const muscleLabel = d.muscle === 'Rest' ? 'Descanso' : d.muscle;
+    el.innerHTML = `<span class="d-name">${d.name}</span><span class="d-date">${d.date}</span><span class="d-muscle">${muscleLabel}</span>`;
+    el.onclick = () => {
+      selectedDay = i;
+      document.querySelectorAll('#' + containerId + ' .day-pill').forEach((p,j) => p.classList.toggle('active', j === i));
+      if (onSelect) onSelect(i);
+    };
+    container.appendChild(el);
+  });
+}
+
+/* =================== SESSION DETAIL =================== */
+function renderSession(dayIdx) {
+  const day = weekDays[dayIdx];
+  document.getElementById('sessionTitle').textContent = (day.muscle !== 'Rest' ? day.muscle + ' Day' : 'Descanso') + ' — ' + day.name;
+  document.getElementById('sessionDate').textContent = day.date + ' · 2026';
+  document.getElementById('sessionMuscle').textContent = day.muscle;
+
+  const tbody = document.getElementById('exerciseTbody');
+  tbody.innerHTML = '';
+  if (day.exercises.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px;font-size:13px">Sin sesión registrada</td></tr>';
+    return;
+  }
+  day.exercises.forEach(ex => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="exercise-name">${ex.name}</div><div class="exercise-muscle">${ex.muscle}</div></td>
+      <td>${ex.peso > 0 ? ex.peso + ' kg' : 'BW'}</td>
+      <td>${ex.series}</td>
+      <td>${ex.reps}</td>
+      <td>${ex.total}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* =================== STREAK DOTS =================== */
+function buildStreakDots(containerId, filled, total, currentClass) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    if (i < filled - 1) d.className = 'streak-dot done';
+    else if (i === filled - 1) d.className = 'streak-dot current';
+    else d.className = 'streak-dot';
+    if (currentClass) {
+      d.classList.remove('streak-dot');
+      d.className = currentClass.base;
+      if (i < filled - 1) d.className = currentClass.done;
+      else if (i === filled - 1) d.className = currentClass.current;
+    }
+    el.appendChild(d);
+  }
+}
+
+/* =================== RACES =================== */
+function buildRaces() {
+  const list = document.getElementById('raceList');
+  if (!list) return;
+  list.innerHTML = '';
+  racesData.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'race-row';
+    el.innerHTML = `
+      <div>
+        <div class="race-name">${r.name}</div>
+        <div class="race-sub">${r.date} · ${r.dist}</div>
+        ${r.pr ? '<span class="race-badge">PR</span>' : ''}
+      </div>
+      <div style="text-align:right">
+        <div class="race-time">${r.time}</div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+/* =================== RUN LOG =================== */
+function buildRunLog() {
+  const tbody = document.getElementById('runLogTbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  runLog.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="color:var(--text2)">${r.date}</td><td>${r.km}</td><td>${r.tiempo}</td><td style="color:var(--red2)">${r.pace}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* =================== RUN STREAK DOTS =================== */
+function buildRunStreakDots(containerId, filled, total) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    if (i < filled - 1) d.className = 'run-streak-dot done';
+    else if (i === filled - 1) d.className = 'run-streak-dot current';
+    else d.className = 'run-streak-dot';
+    el.appendChild(d);
+  }
+}
+
+/* =================== CHARTS =================== */
+let statsChartsRendered = false;
+
+function renderWeightMiniChart() {
+  const ctx = document.getElementById('weightMiniChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['S18','S19','S20','S21','S22'],
+      datasets: [{
+        data: [86.1, 85.8, 85.3, 85.0, 84.6],
+        borderColor: '#3b82f6',
+        borderWidth: 2,
+        pointBackgroundColor: '#3b82f6',
+        pointRadius: [2,2,2,2,4],
+        tension: 0.4,
+        fill: true,
+        backgroundColor: 'rgba(59,130,246,0.08)'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y.toFixed(1) + ' kg' } } },
+      scales: {
+        x: { ticks: { color: '#4a6499', font: { size: 10 } }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { color: '#4a6499', font: { size: 10 }, callback: v => v + 'kg' }, grid: { color: 'rgba(59,130,246,0.06)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+function renderRunKmChart() {
+  const ctx = document.getElementById('runKmChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: runLog.map(r => r.date).reverse(),
+      datasets: [{
+        data: runLog.map(r => r.km).reverse(),
+        backgroundColor: runLog.map(r => r.km).reverse().map(k => k >= 15 ? 'rgba(239,68,68,0.7)' : 'rgba(239,68,68,0.35)'),
+        borderColor: 'rgba(248,113,113,0.6)',
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (c) => {
+              const r = runLog[runLog.length - 1 - c.dataIndex];
+              return [c.parsed.y + ' km', 'Tiempo: ' + r.tiempo, 'Pace: ' + r.pace + '/km'];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#6b3a3a', font: { size: 10 }, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { color: '#6b3a3a', font: { size: 10 }, callback: v => v + 'k' }, grid: { color: 'rgba(239,68,68,0.06)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+function renderStatsCharts() {
+  if (statsChartsRendered) return;
+  statsChartsRendered = true;
+
+  const ctxW = document.getElementById('weightStatsChart');
+  if (ctxW) {
+    new Chart(ctxW, {
+      type: 'line',
+      data: {
+        labels: ['1 May','5 May','10 May','15 May','20 May','25 May','29 May'],
+        datasets: [{
+          label: 'Peso',
+          data: [86.2, 85.9, 85.5, 85.1, 84.9, 84.7, 84.6],
+          borderColor: '#3b82f6',
+          borderWidth: 2,
+          pointBackgroundColor: '#3b82f6',
+          pointRadius: 3,
+          tension: 0.4,
+          fill: true,
+          backgroundColor: 'rgba(59,130,246,0.07)'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#4a6499', font: { size: 10 } }, grid: { display: false }, border: { display: false } },
+          y: { ticks: { color: '#4a6499', font: { size: 10 }, callback: v => v.toFixed(1) + ' kg' }, grid: { color: 'rgba(59,130,246,0.06)' }, border: { display: false }, min: 83, max: 88 }
+        }
+      }
+    });
+  }
+
+  const ctxV = document.getElementById('volumeChart');
+  if (ctxV) {
+    new Chart(ctxV, {
+      type: 'bar',
+      data: {
+        labels: ['Pecho','Espalda','Piernas','Hombros','Bíceps','Tríceps'],
+        datasets: [{
+          label: 'Volumen (reps totales)',
+          data: [234, 312, 273, 184, 162, 120],
+          backgroundColor: ['rgba(59,130,246,0.5)','rgba(96,165,250,0.5)','rgba(37,99,235,0.5)','rgba(147,197,253,0.4)','rgba(59,130,246,0.4)','rgba(239,68,68,0.4)'],
+          borderColor: ['rgba(96,165,250,0.7)','rgba(147,197,253,0.7)','rgba(96,165,250,0.7)','rgba(147,197,253,0.6)','rgba(96,165,250,0.6)','rgba(248,113,113,0.6)'],
+          borderWidth: 1,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#4a6499', font: { size: 11 }, autoSkip: false }, grid: { display: false }, border: { display: false } },
+          y: { ticks: { color: '#4a6499', font: { size: 10 } }, grid: { color: 'rgba(59,130,246,0.06)' }, border: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+/* =================== INIT =================== */
+function init() {
+  buildDayPills('dayRowHome', null);
+  buildDayPills('dayRowSession', (i) => renderSession(i));
+  renderSession(selectedDay);
+
+  buildStreakDots('streakDotsHome', streakWeeks, totalWeeks);
+  buildStreakDots('streakDotsStats', streakWeeks, totalWeeks);
+  buildRunStreakDots('runStreakDots', 5, 10);
+  buildRunStreakDots('runStreakDotsRaces', 5, 12);
+
+  buildRaces();
+  buildRunLog();
+
+  renderWeightMiniChart();
+  renderRunKmChart();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
