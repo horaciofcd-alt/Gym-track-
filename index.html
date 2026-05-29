@@ -47,6 +47,10 @@ body.light header{border-bottom:1px solid var(--border);padding-bottom:16px}
 .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:20px;color:var(--muted)}
 .spinner{width:38px;height:38px;border:2px solid var(--border);border-top-color:var(--gym);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.btn-action{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:border-color .15s,color .15s}
+.btn-edit:hover{border-color:var(--gym);color:var(--gym)}
+.btn-del:hover{border-color:var(--red);color:var(--red)}
+
 
 /* TOP STATS */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
@@ -611,8 +615,8 @@ function buildGym(){
       <div class="ex-pill ex-reps">${reps}</div>
       <div class="ex-pill ex-peso">${peso||'s/p'}</div>
       <div style="display:flex;gap:4px;margin-left:4px">
-        <button onclick="editRow('${id}')" title="Editar" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s" onmouseover="this.style.borderColor='var(--gym)';this.style.color='var(--gym)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" title="Editar">✏</button>
-        <button onclick="deleteRow('${id}')" title="Eliminar" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" title="Eliminar">✕</button>
+        <button onclick="editRow('${id}')" title="Editar" class="btn-action btn-edit">✏</button>
+        <button onclick="deleteRow('${id}')" title="Eliminar" class="btn-action btn-del">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -953,8 +957,8 @@ function renderSearchResults(rows, title, subtitle){
       +'<div class="ex-pill ex-reps">'+reps+'</div>'
       +'<div class="ex-pill ex-peso">'+(peso||'s/p')+'</div>'
       +'<div style="display:flex;gap:4px;margin-left:4px">'
-        +'<button onclick="editRow(\''+id+'\')" title="Editar" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s" onmouseover="this.style.borderColor='var(--gym)';this.style.color='var(--gym)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" title="Editar">✏</button>'
-        +'<button onclick="deleteRow(\''+id+'\')" title="Eliminar" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" title="Eliminar">✕</button>'
+        +'<button onclick="editRow(\''+id+'\')" title="Editar" class="btn-action btn-edit">✏</button>'
+        +'<button onclick="deleteRow(\''+id+'\')" title="Eliminar" class="btn-action btn-del">✕</button>'
       +'</div>'
       +'</div>';
   }).join('');
