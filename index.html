@@ -319,12 +319,20 @@ let gymData=[],runData=[],curTab='gym',allPRs=[];
 /* ── Supabase fetch ── */
 async function fetchSheet(sheet){
   const table=sheet==='Gym'?'entrenamientos':'running';
-  const res=await fetch(SUPA_URL+'/rest/v1/'+table+'?select=*&order=fecha.asc',{
-    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  const res=await fetch(SUPA_URL+'/rest/v1/'+table+'?select=*&order=fecha.asc&limit=2000',{
+    headers:{
+      'apikey':SUPA_KEY,
+      'Authorization':'Bearer '+SUPA_KEY,
+      'Accept':'application/json',
+      'Accept-Profile':'public'
+    }
   });
-  if(!res.ok)throw new Error('Error al cargar '+sheet);
+  if(!res.ok){
+    const txt=await res.text();
+    throw new Error(sheet+' HTTP '+res.status+': '+txt);
+  }
   const data=await res.json();
-  // normalize keys to match existing g() calls
+  if(!Array.isArray(data)) throw new Error(sheet+' respuesta inesperada: '+JSON.stringify(data).slice(0,100));
   if(sheet==='Gym'){
     return data.map(r=>({
       '_id':r.id,
@@ -339,7 +347,11 @@ async function fetchSheet(sheet){
       'Peso corporal':r.peso_corporal
     }));
   }
-  return data;
+  return data.map(r=>({
+    'Fecha':r.fecha,'Distancia':r.distancia,'Tiempo':r.tiempo,
+    'Pace Medio':r.pace_medio,'pace faster':r.pace_faster,
+    'VO2 Max':r.vo2_max,'Notas':r.notas
+  }));
 }
 
 /* ── Save to Supabase ── */
