@@ -217,6 +217,34 @@ canvas{display:block;width:100%}
       <div class="exercise-list" id="lastWorkoutList"></div>
   </div>
 
+    <!-- Músculo bars -->
+    <div class="card" id="mbarsCard">
+      <div class="card-title" style="margin-bottom:16px">💪 Volumen por grupo muscular</div>
+      <div id="mbars"></div>
+    </div>
+
+    <!-- Peso corporal -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px">⚖️ Peso corporal</div>
+      <canvas id="cWeight" height="120"></canvas>
+      <div id="weightTable"></div>
+    </div>
+
+    <!-- PRs -->
+    <div class="card">
+      <div class="card-header" style="margin-bottom:16px">
+        <div class="card-title">🏆 PRs por ejercicio</div>
+        <div class="card-meta" id="prMeta"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="prSearch" placeholder="Buscar ejercicio..." class="date-input" oninput="filterPRs(this.value)" style="flex:1;min-width:160px">
+        <button onclick="renderPRs(allPRs,true)" class="refresh">Agrupar</button>
+        <button onclick="renderPRs(allPRs,false)" class="refresh">Lista</button>
+      </div>
+      <div id="prGrouped"></div>
+      <div id="prGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+    </div>
+
   <!-- ═══ RUNNING ═══ -->
   <div class="section" id="runSec">
     <div class="run-stats-row" id="runStats"><div class="stat r"><div class="stat-label">Total km</div><div class="stat-val">77.5<span style="font-size:16px"> km</span></div></div><div class="stat r"><div class="stat-label">Salidas</div><div class="stat-val">8</div></div><div class="stat r"><div class="stat-label">VO2 Max</div><div class="stat-val">52</div></div><div class="stat r"><div class="stat-label">Última salida</div><div class="stat-val" style="font-size:22px;line-height:1.4">10.05</div><div class="stat-sub">21/03 · 59.14min</div></div></div>
