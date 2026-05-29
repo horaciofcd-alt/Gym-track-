@@ -97,9 +97,9 @@ body.light header{border-bottom:1px solid var(--border);padding-bottom:16px}
 .exercise-list{display:flex;flex-direction:column;gap:8px}
 .exercise-item{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--surface2);border-radius:10px;transition:background .15s}
 .exercise-item:hover{background:var(--border)}
-.ex-name{font-size:14px;font-weight:500}.ex-item-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ex-name{font-size:14px;font-weight:500}.exercise-item>div:first-child{min-width:0}.ex-item-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
 .ex-muscle{font-size:11px;color:var(--muted);margin-top:2px}
-.ex-pill{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;text-align:center;flex-shrink:0}
+.ex-pill{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;text-align:center;flex-shrink:0;flex-grow:0;width:auto}
 .ex-series{background:rgba(200,245,56,0.08);color:var(--gym)}
 .ex-reps{background:rgba(255,255,255,0.05);color:var(--muted)}
 .ex-peso{background:rgba(245,166,35,0.12);color:var(--gold);min-width:70px}
@@ -214,8 +214,7 @@ canvas{display:block;width:100%}
       </div>
       <div class="workout-date" id="lastWorkoutDate">23/03/2026</div>
       <div class="workout-groups" id="lastWorkoutGroups">Pierna · Abdomen</div>
-      <div class="exercise-list" id="lastWorkoutList"><div class="exercise-item">
-      <div><div class="ex-name">Peso muerto rumano</div><div class="ex-muscle">Pierna</div></div>
+      <div class="exercise-list" id="lastWorkoutList"></div></div>
       <div class="ex-pill ex-series">4 series</div>
       <div class="ex-pill ex-reps">10;10;10;10</div>
       <div class="ex-pill ex-peso">60 kg</div>
