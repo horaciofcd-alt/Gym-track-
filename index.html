@@ -74,7 +74,7 @@ body.light header{border-bottom:1px solid var(--border);padding-bottom:16px}
   .grid2{grid-template-columns:1fr}
   .full{grid-column:1}
   .wrap{padding:16px 12px}
-  .exercise-item{grid-template-columns:1fr auto auto;gap:6px;padding:10px 12px}
+  .exercise-item{grid-template-columns:1fr auto auto auto auto;gap:4px;padding:8px 10px}
   .stats-row{grid-template-columns:1fr 1fr}
   .run-stats-row{grid-template-columns:1fr 1fr}
   .pr-grid{grid-template-columns:1fr 1fr}
@@ -103,7 +103,7 @@ body.light header{border-bottom:1px solid var(--border);padding-bottom:16px}
 .ex-series{background:rgba(200,245,56,0.08);color:var(--gym)}
 .ex-reps{background:rgba(255,255,255,0.05);color:var(--muted)}
 .ex-peso{background:rgba(245,166,35,0.12);color:var(--gold);min-width:70px}
-@media(max-width:600px){.exercise-item{grid-template-columns:1fr auto auto auto;gap:4px;}.ex-pill{padding:3px 8px;font-size:11px;}}
+@media(max-width:600px){.exercise-item{grid-template-columns:1fr auto auto auto;gap:4px;}.ex-pill{padding:3px 7px;font-size:10px;}}
 
 /* PR TABLE */
 .pr-search{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:16px;outline:none;transition:border-color .2s}
@@ -968,29 +968,62 @@ function renderSearchResults(rows, title, subtitle){
 }
 
 function searchByMuscle(muscle){
-  // find last session that includes this muscle
   const byDate={};
   gymData.forEach(r=>{
     const d=String(g(r,'fecha','Fecha'));
     const m=g(r,'grupo muscular','Grupo muscular');
-    if(d&&m===muscle){
-      if(!byDate[d])byDate[d]=[];
-      byDate[d].push(r);
-    }
+    if(d&&m===muscle){if(!byDate[d])byDate[d]=[];byDate[d].push(r);}
   });
-  const dates=Object.keys(byDate).sort();
+  const dates=Object.keys(byDate).sort().reverse();
   if(!dates.length){
     document.getElementById('searchResults').innerHTML='<div class="no-results">No hay registros de '+muscle+'.</div>';
     document.getElementById('clearSearchBtn').style.display='block';
     return;
   }
-  const lastDate=dates[dates.length-1];
-  // get all exercises from that full session (all muscles that day)
-  const allThatDay=gymData.filter(r=>String(g(r,'fecha','Fecha'))===lastDate);
-  const allGroups=[...new Set(allThatDay.map(r=>g(r,'grupo muscular','Grupo muscular')).filter(Boolean))];
-  // show only the muscle requested
+  const lastDate=dates[0];
   const rows=byDate[lastDate];
-  renderSearchResults(rows, 'Último '+muscle, fmtDate(lastDate)+' · '+allGroups.join(', '));
+  const col='var(--gym)';
+
+  let html='<div class="date-result-header">Último '+muscle+'</div>';
+  html+='<div class="date-result-groups">'+fmtDate(lastDate)+' · '+dates.length+' sesiones totales</div>';
+  html+='<div class="exercise-list">';
+  html+=rows.map(r=>{
+    const id=r['_id']||'';
+    return '<div class="exercise-item">'
+      +'<div><div class="ex-name">'+g(r,'ejercicio','Ejercicio')+'</div><div class="ex-muscle">'+g(r,'grupo muscular','Grupo muscular')+'</div></div>'
+      +'<div class="ex-pill ex-series">'+g(r,'series','Series')+' series</div>'
+      +'<div class="ex-pill ex-reps">'+g(r,'repeticiones','Repeticiones')+'</div>'
+      +'<div class="ex-pill ex-peso">'+(g(r,'peso','Peso')||'s/p')+'</div>'
+      +'<div style="display:flex;gap:4px;margin-left:4px">'
+        +'<button onclick="editRow(''+id+'')" class="btn-action btn-edit">✏</button>'
+        +'<button onclick="deleteRow(''+id+'')" class="btn-action btn-del">✕</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  html+='</div>';
+
+  if(dates.length>1){
+    html+='<div style="margin-top:16px"><div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Sesiones anteriores</div>';
+    html+=dates.slice(1,4).map(d=>{
+      const rs=byDate[d];
+      return '<div style="padding:10px 14px;background:var(--surface2);border-radius:10px;margin-bottom:6px;font-size:13px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">'
+        +'<span style="color:var(--muted)">'+fmtDate(d)+'</span>'
+        +'<span style="color:var(--text);margin-left:12px">'+rs.map(r=>g(r,'ejercicio','Ejercicio')).join(' · ')+'</span>'
+        +'</div>'
+        +'<div style="display:none;padding:0 8px 8px">'
+        +rs.map(r=>'<div class="exercise-item" style="margin-bottom:4px">'
+          +'<div><div class="ex-name">'+g(r,'ejercicio','Ejercicio')+'</div></div>'
+          +'<div class="ex-pill ex-series">'+g(r,'series','Series')+' series</div>'
+          +'<div class="ex-pill ex-reps">'+g(r,'repeticiones','Repeticiones')+'</div>'
+          +'<div class="ex-pill ex-peso">'+(g(r,'peso','Peso')||'s/p')+'</div>'
+          +'</div>').join('')
+        +'</div>';
+    }).join('');
+    html+='</div>';
+  }
+
+  document.getElementById('searchResults').innerHTML=html;
+  document.getElementById('clearSearchBtn').style.display='block';
   document.getElementById('dateSearch').value='';
 }
 
