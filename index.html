@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Training Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#060b18;--surface:rgba(10,20,50,0.55);--glass:rgba(20,50,120,0.22);
+  --gb:rgba(80,140,255,0.18);--gb2:rgba(80,140,255,0.08);
+  --blue:#3b82f6;--blue2:#60a5fa;--blue3:#93c5fd;
+  --red:#ef4444;--red2:#f87171;
+  --tx:#f0f4ff;--tx2:#8ba4d4;--tx3:#4a6499;
+  --inp:rgba(20,50,120,0.18);
+  --run-bg:#110608;--run-sf:rgba(50,10,10,0.55);
+  --run-gl:rgba(120,20,20,0.22);--run-bd:rgba(255,80,80,0.18);
+  --row-odd:rgba(239,68,68,0.06);--row-even:rgba(59,130,246,0.06);
+}
+[data-theme="light"]{
+  --bg:#f0f4ff;--surface:rgba(255,255,255,0.82);--glass:rgba(200,220,255,0.5);
+  --gb:rgba(59,130,246,0.25);--gb2:rgba(59,130,246,0.12);
+  --tx:#0f1c3f;--tx2:#3a5a99;--tx3:#7a99cc;
+  --inp:rgba(200,220,255,0.3);
+  --run-bg:#fff0f0;--run-sf:rgba(255,240,240,0.85);
+  --run-gl:rgba(255,200,200,0.4);--run-bd:rgba(239,68,68,0.2);
+  --row-odd:rgba(239,68,68,0.07);--row-even:rgba(59,130,246,0.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;transition:background .3s}
+body::before{content:'';position:fixed;top:-120px;left:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(37,99,235,.15) 0%,transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-80px;right:-60px;width:320px;height:320px;background:radial-gradient(circle,rgba(239,68,68,.1) 0%,transparent 70%);pointer-events:none;z-index:0}
+.slides-wrapper{display:flex;width:200%;transition:transform .5s cubic-bezier(.4,0,.2,1);position:relative;z-index:1}
+.slides-wrapper.run-mode{transform:translateX(-50%)}
+.slide{width:50%;min-height:100vh;padding:0 16px 100px}
+.top-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
+.top-bar-actions{display:flex;gap:8px;align-items:center}
+.mode-sw{display:flex;background:rgba(10,20,50,.75);backdrop-filter:blur(16px);border:.5px solid var(--gb);border-radius:14px;overflow:hidden}
+[data-theme="light"] .mode-sw{background:rgba(255,255,255,.85)}
+.mode-btn{padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--tx2);background:transparent;border:none;font-family:'DM Sans',sans-serif;transition:all .3s}
+.mode-btn.active{color:#fff;background:rgba(37,99,235,.5)}
+.mode-btn.run-active{color:#fff;background:rgba(220,38,38,.5)}
+.icon-btn{width:36px;height:36px;background:var(--glass);border:.5px solid var(--gb);border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px);flex-shrink:0}
+.icon-btn i{font-size:17px;color:var(--blue2)}
+.glass{background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:.5px solid var(--gb);border-radius:20px;position:relative;overflow:hidden}
+.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(120,180,255,.4),transparent)}
+.glass-sm{background:var(--glass);backdrop-filter:blur(12px);border:.5px solid var(--gb2);border-radius:14px}
+.label{font-size:12px;color:var(--tx3);font-weight:400;letter-spacing:.3px}
+.prog-bar{height:4px;background:rgba(80,140,255,.12);border-radius:4px;margin-top:8px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.nav-tabs{position:fixed;bottom:0;width:100%;max-width:480px;left:50%;transform:translateX(-50%);background:rgba(6,11,24,.92);backdrop-filter:blur(24px);border-top:.5px solid var(--gb);display:flex;justify-content:space-around;padding:10px 0 20px;z-index:50;transition:background .3s}
+[data-theme="light"] .nav-tabs{background:rgba(240,244,255,.94)}
+.nav-tabs.run-mode{background:rgba(17,6,8,.92);border-top-color:rgba(255,80,80,.18)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--tx3);cursor:pointer;padding:4px 12px;border-radius:12px;background:none;border:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.tab i{font-size:22px}
+.tab.active{color:var(--blue2)}
+.tab.run-active{color:var(--red2)}
+.section{display:none;padding-top:24px}
+.section.visible{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;padding:56px 0 16px}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.page-sub{font-size:13px;color:var(--tx2);margin-top:3px}
+.day-row{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.day-row::-webkit-scrollbar{display:none}
+.day-pill{flex:0 0 auto;width:46px;text-align:center;padding:8px 4px 6px;border-radius:12px;color:var(--tx3);background:var(--glass);border:.5px solid var(--gb2);cursor:pointer;transition:all .2s}
+.day-pill .dn{font-weight:700;font-size:12px;color:var(--tx2);display:block}
+.day-pill .dd{display:block;margin-top:2px;font-size:9px;color:var(--tx3)}
+.day-pill .dm{display:block;margin-top:4px;font-size:8px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.day-pill.active{background:rgba(37,99,235,.3);border-color:rgba(96,165,250,.5)}
+.day-pill.active .dn{color:var(--blue2)}
+.day-pill.active .dm{color:var(--blue3)}
+.day-pill.empty-day{opacity:.35;cursor:default}
+.day-pill.has-data .dn{color:var(--tx)}
+
+/* SESSION TABLE */
+.ses-card{background:var(--surface);backdrop-filter:blur(20px);border:.5px solid var(--gb);border-radius:16px;position:relative}
+.ses-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(120,180,255,.4),transparent)}
+.ses-table{width:100%;border-collapse:collapse;font-size:12px}
+/* col widths: ejercicio | peso | ser | reps | tot */
+.ses-table col.c-ej{width:auto}
+.ses-table col.c-ps{width:70px}
+.ses-table col.c-sr{width:30px}
+.ses-table col.c-rp{white-space:nowrap}
+.ses-table col.c-tt{width:44px}
+.ses-table thead tr{border-bottom:.5px solid var(--gb)}
+.ses-table th{padding:8px 6px;font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.ses-table th:not(:first-child){text-align:center}
+/* stripe with gradient fade */
+.ses-table tbody tr:nth-child(odd){background:linear-gradient(90deg,rgba(239,68,68,.08) 0%,rgba(239,68,68,.03) 100%)}
+.ses-table tbody tr:nth-child(even){background:linear-gradient(90deg,rgba(59,130,246,.08) 0%,rgba(59,130,246,.03) 100%)}
+.ses-table tbody tr{border-bottom:.5px solid rgba(255,255,255,.04)}
+.ses-table tbody tr:last-child{border-bottom:none}
+.ses-table td{padding:9px 6px;vertical-align:middle}
+.ses-table td:not(:first-child){text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)}
+.ex-name{font-size:12px;font-weight:600;color:var(--tx);line-height:1.2}
+.ex-group{font-size:9px;color:var(--tx3);margin-top:1px}
+.peso-badge{display:inline-block;background:rgba(37,99,235,.15);color:var(--blue2);border:.5px solid rgba(96,165,250,.25);border-radius:5px;padding:2px 5px;font-size:10px;font-family:'DM Mono',monospace;white-space:nowrap}
+.total-badge{display:inline-block;background:rgba(239,68,68,.15);color:var(--red2);border:.5px solid rgba(248,113,113,.25);border-radius:5px;padding:2px 5px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600}
+.reps-cell{white-space:nowrap;font-size:10px;font-family:'DM Mono',monospace;color:var(--tx2);text-align:center}
+
+/* STREAK */
+.streak-trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.sti{text-align:center;padding:12px 6px;border-radius:12px}
+.sti-val{font-size:22px;font-weight:700;letter-spacing:-1px;color:var(--tx)}
+.sti-val.grad{background:linear-gradient(135deg,var(--blue2),var(--red2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sti-unit{font-size:9px;color:var(--tx3);display:block;margin-top:1px}
+.sti-label{font-size:9px;color:var(--tx3);margin-top:3px;text-transform:uppercase;letter-spacing:.4px}
+
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:14px;border-top:.5px solid var(--gb2);padding-top:12px}
+.metric-item{text-align:center;padding:2px 0}
+.metric-item:not(:last-child){border-right:.5px solid var(--gb2)}
+.metric-val{font-size:17px;font-weight:700;letter-spacing:-.5px;color:var(--tx)}
+.metric-unit{font-size:9px;color:var(--tx3);margin-left:1px}
+.metric-label{font-size:9px;color:var(--tx3);margin-top:2px}
+
+/* HEATMAP */
+.heatmap-wrap{overflow-x:auto;padding-bottom:4px}
+.heatmap-grid{display:grid;grid-template-columns:32px repeat(7,1fr);gap:4px;min-width:280px}
+.hm-cell{width:100%;aspect-ratio:1;border-radius:6px;transition:all .2s;position:relative}
+.hm-cell:hover .hm-tip{display:block}
+.hm-tip{display:none;position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:rgba(6,11,24,.95);border:.5px solid var(--gb);border-radius:8px;padding:4px 8px;font-size:10px;color:var(--tx);white-space:nowrap;z-index:10;pointer-events:none}
+.hm-label{font-size:8px;color:var(--tx3);display:flex;align-items:center;justify-content:flex-end;padding-right:4px;white-space:nowrap}
+.hm-day-label{font-size:8px;color:var(--tx3);text-align:center;padding:2px 0}
+.hm-legend{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.hm-legend span{font-size:9px;color:var(--tx3);display:flex;align-items:center;gap:3px}
+.hm-dot{width:9px;height:9px;border-radius:2px}
+
+/* PR */
+.pr-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pr-tag{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:.5px solid var(--gb2);background:var(--glass);color:var(--tx2);transition:all .2s}
+.pr-tag.active{background:rgba(37,99,235,.3);border-color:rgba(96,165,250,.5);color:var(--blue2)}
+
+/* FORM */
+.fl{margin-bottom:14px}
+.fl-label{font-size:12px;color:var(--tx3);margin-bottom:6px;display:block;font-weight:500;letter-spacing:.3px}
+.fi{width:100%;background:var(--inp);border:.5px solid var(--gb);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:border .2s}
+.fi:focus{border-color:var(--blue2)}
+[data-theme="light"] .fi{background:rgba(220,235,255,.4)}
+select.fi{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238ba4d4' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ex-entry{background:var(--glass);border:.5px solid var(--gb2);border-radius:12px;padding:12px;margin-bottom:10px;position:relative}
+.btn-add-ex{width:100%;padding:10px;background:rgba(37,99,235,.12);border:.5px dashed rgba(96,165,250,.4);border-radius:10px;color:var(--blue2);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px}
+.btn-sub{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--blue2));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:6px}
+.btn-sub:disabled{opacity:.5;cursor:not-allowed}
+.btn-rmex{position:absolute;top:8px;right:8px;width:24px;height:24px;background:rgba(239,68,68,.15);border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--red2)}
+.btn-rmex i{font-size:14px}
+.save-st{text-align:center;font-size:13px;margin-top:10px;color:var(--tx2);min-height:20px}
+.reps-inputs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rep-input{width:52px;background:var(--inp);border:.5px solid var(--gb);border-radius:8px;padding:7px 8px;font-size:13px;color:var(--tx);font-family:'DM Mono',monospace;outline:none;text-align:center}
+.rep-input:focus{border-color:var(--blue2)}
+.total-row{margin-top:8px;font-size:12px;color:var(--tx2);font-family:'DM Mono',monospace}
+.total-row span{color:var(--blue2);font-weight:600}
+/* autocomplete */
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:rgba(6,11,24,.97);border:.5px solid var(--gb);border-radius:10px;z-index:50;max-height:160px;overflow-y:auto;display:none}
+[data-theme="light"] .ac-list{background:#f0f4ff}
+.ac-list.open{display:block}
+.ac-item{padding:9px 12px;font-size:13px;color:var(--tx2);cursor:pointer;transition:background .15s}
+.ac-item:hover{background:rgba(59,130,246,.15);color:var(--tx)}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border:.5px solid var(--gb);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+[data-theme="light"] .modal{background:#f8faff}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{width:32px;height:32px;background:var(--glass);border:.5px solid var(--gb);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.modal-close i{font-size:16px;color:var(--tx2)}
+
+/* RUNNING */
+.glass-run{background:var(--run-sf);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:.5px solid var(--run-bd);border-radius:20px;position:relative;overflow:hidden}
+.glass-run::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,120,120,.4),transparent)}
+.run-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.run-streak-num{font-size:44px;font-weight:700;letter-spacing:-2px;background:linear-gradient(135deg,var(--red2),#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.run-streak-dot{width:11px;height:11px;border-radius:3px;background:rgba(239,68,68,.15);border:.5px solid rgba(255,80,80,.15)}
+.run-streak-dot.done{background:var(--red);border-color:var(--red2)}
+.run-streak-dot.current{background:#f59e0b;border-color:#fbbf24}
+.run-table{width:100%;border-collapse:collapse;font-size:12px}
+.run-table th{text-align:left;font-size:10px;font-weight:500;color:var(--tx3);padding:0 6px 10px;text-transform:uppercase;letter-spacing:.5px}
+.run-table th:not(:first-child){text-align:right}
+.run-table td{padding:9px 6px;border-top:.5px solid rgba(255,80,80,.07)}
+.run-table td:not(:first-child){text-align:right;font-family:'DM Mono',monospace;color:var(--tx2);font-size:11px}
+
+.row-between{display:flex;justify-content:space-between;align-items:center}
+.mb-14{margin-bottom:14px}
+.p-16{padding:16px}
+.p-18{padding:18px}
+.loading{text-align:center;padding:32px 0;color:var(--tx3);font-size:13px}
+.loading i{font-size:22px;display:block;margin-bottom:6px;animation:spin 1s linear infinite}
+.empty{text-align:center;padding:24px;color:var(--tx3);font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="mode-sw">
+    <button class="mode-btn active" id="btnGym" onclick="setMode('gym')"><i class="ti ti-barbell" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Gym</button>
+    <button class="mode-btn" id="btnRun" onclick="setMode('run')"><i class="ti ti-run" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Running</button>
+  </div>
+  <div class="top-bar-actions">
+    <div class="icon-btn" onclick="toggleTheme()"><i class="ti ti-sun" id="themeIcon"></i></div>
+    <div class="icon-btn" onclick="openSettings()"><i class="ti ti-settings"></i></div>
+    <div class="icon-btn" onclick="openAddModal()"><i class="ti ti-plus"></i></div>
+  </div>
+</div>
+
+<div class="slides-wrapper" id="slidesWrapper">
+<div class="slide" id="slideGym">
+
+  <!-- HOME -->
+  <div class="section visible" id="sec-home">
+    <div class="page-header">
+      <div>
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:4px" id="greetingText">Hola</div>
+        <div class="page-title">Workouts</div>
+        <div class="page-sub" id="homeSubtitle">Cargando...</div>
+      </div>
+    </div>
+    <div class="glass p-18 mb-14" id="weightHero"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="glass-sm p-16" style="padding:14px">
+        <div class="label" style="margin-bottom:6px"><i class="ti ti-flame" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>Sesiones sem.</div>
+        <div style="font-size:26px;font-weight:700;color:var(--tx)" id="statSessions">—</div>
+        <div class="prog-bar"><div class="prog-fill" id="progSessions" style="width:0%"></div></div>
+      </div>
+      <div class="glass-sm p-16" style="padding:14px">
+        <div class="label" style="margin-bottom:8px"><i class="ti ti-fire" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>Racha (semanas)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">
+          <div><div style="font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--blue2),var(--red2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="homeRachaAct">—</div><div style="font-size:8px;color:var(--tx3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px">Actual</div></div>
+          <div><div style="font-size:18px;font-weight:700;color:var(--tx2)" id="homeRachaUlt">—</div><div style="font-size:8px;color:var(--tx3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px">Última</div></div>
+          <div><div style="font-size:18px;font-weight:700;color:var(--tx2)" id="homeRachaMej">—</div><div style="font-size:8px;color:var(--tx3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px">Mejor</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="row-between mb-14">
+      <div style="font-size:15px;font-weight:600">Última sesión</div>
+      <div style="font-size:12px;color:var(--tx2)" id="lastSessionDate">—</div>
+    </div>
+    <div class="mb-14" id="lastSessionCard"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+  </div>
+
+  <!-- SESIÓN -->
+  <div class="section" id="sec-session">
+    <div class="page-header">
+      <div><div class="page-title">Sesiones</div><div class="page-sub" id="sessionWeekLabel">Semana actual</div></div>
+    </div>
+    <div class="day-row" id="dayRowSession"></div>
+    <div id="sessionDetail" class="mb-14"><div class="empty">Selecciona un día</div></div>
+    <div class="row-between mb-14" style="margin-top:4px">
+      <div style="font-size:15px;font-weight:600">Registrar entrenamiento</div>
+    </div>
+    <div class="glass p-16 mb-14">
+      <div class="fl">
+        <label class="fl-label">Fecha</label>
+        <input type="date" class="fi" id="iAddFecha">
+      </div>
+      <div class="fl">
+        <label class="fl-label">Grupo muscular</label>
+        <select class="fi" id="iAddGrupo"><option value="">Selecciona grupo...</option></select>
+      </div>
+      <div class="fl">
+        <label class="fl-label">Peso corporal (kg)</label>
+        <input type="text" class="fi" id="iAddPesoCorp" placeholder="84.6" style="width:50%">
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px">Ejercicios</div>
+      <div id="iExerciseEntries"></div>
+      <button class="btn-add-ex" onclick="addExEntry('iExerciseEntries','inline')"><i class="ti ti-plus" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Añadir ejercicio</button>
+      <button class="btn-sub" id="iBtnSave" onclick="saveSession('inline')"><i class="ti ti-device-floppy" style="font-size:14px;vertical-align:-2px;margin-right:5px"></i>Guardar sesión</button>
+      <div class="save-st" id="iSaveStatus"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="section" id="sec-stats">
+    <div class="page-header">
+      <div><div class="page-title">Stats</div><div class="page-sub">Tu progreso</div></div>
+    </div>
+
+    <!-- PRs FIRST -->
+    <div class="row-between mb-14">
+      <div style="font-size:15px;font-weight:600">PRs por grupo muscular</div>
+    </div>
+    <div class="pr-selector" id="prSelector"></div>
+    <div class="glass p-16 mb-14">
+      <div id="prChartWrap" style="position:relative"></div>
+    </div>
+
+    <!-- Racha -->
+    <div class="glass p-16 mb-14">
+      <div class="label" style="margin-bottom:12px"><i class="ti ti-calendar-check" style="font-size:12px;vertical-align:-2px;margin-right:4px"></i>Racha de entrenamiento</div>
+      <div class="streak-trio">
+        <div class="sti glass-sm"><div class="sti-val grad" id="siCurrent">0</div><span class="sti-unit">semanas</span><div class="sti-label">Racha actual</div></div>
+        <div class="sti glass-sm"><div class="sti-val" id="siLast">0</div><span class="sti-unit">semanas</span><div class="sti-label">Última racha</div></div>
+        <div class="sti glass-sm"><div class="sti-val" id="siBest">0</div><span class="sti-unit">semanas</span><div class="sti-label">Mejor racha</div></div>
+      </div>
+    </div>
+
+    <!-- Métricas personales -->
+    <div class="glass p-16 mb-14">
+      <div class="label" style="margin-bottom:12px"><i class="ti ti-user" style="font-size:12px;vertical-align:-2px;margin-right:4px"></i>Métricas personales</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+        <div style="text-align:center;padding:4px 0;border-right:.5px solid var(--gb2)"><div style="font-size:20px;font-weight:700" id="smDias">—</div><div class="label" style="margin-top:2px">Días</div></div>
+        <div style="text-align:center;padding:4px 0;border-right:.5px solid var(--gb2)"><div style="font-size:20px;font-weight:700" id="smPeso">—</div><div class="label" style="margin-top:2px">Peso kg</div></div>
+        <div style="text-align:center;padding:4px 0;border-right:.5px solid var(--gb2)"><div style="font-size:20px;font-weight:700" id="smTalla">—</div><div class="label" style="margin-top:2px">Talla cm</div></div>
+        <div style="text-align:center;padding:4px 0"><div style="font-size:20px;font-weight:700" id="smVO2">—</div><div class="label" style="margin-top:2px">VO2 Max</div></div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="row-between mb-14">
+      <div style="font-size:15px;font-weight:600">Actividad — volumen semanal</div>
+    </div>
+    <div class="glass p-16 mb-14">
+      <div class="heatmap-wrap"><div class="heatmap-grid" id="heatmapGrid"></div></div>
+      <div class="hm-legend">
+        <span><div class="hm-dot" style="background:rgba(80,80,100,.25)"></div>0</span>
+        <span><div class="hm-dot" style="background:#4c1d95"></div>&lt;200</span>
+        <span><div class="hm-dot" style="background:#7c3aed"></div>200</span>
+        <span><div class="hm-dot" style="background:#dc2626"></div>500</span>
+        <span><div class="hm-dot" style="background:#f97316"></div>800</span>
+        <span><div class="hm-dot" style="background:#fbbf24"></div>1000+</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /slideGym -->
+
+<!-- RUNNING -->
+<div class="slide" style="background:var(--run-bg)">
+  <div class="section visible" id="sec-run-home">
+    <div class="page-header"><div><div class="page-title">Running</div><div class="page-sub" id="runSubtitle">Cargando...</div></div></div>
+    <div class="run-stat-grid" id="runTopStats">
+      <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+      <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+      <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+      <div class="glass-run p-16"><div class="loading"><i class="ti ti-loader-2"></i></div></div>
+    </div>
+    <div class="row-between mb-14"><div style="font-size:15px;font-weight:600">Progresión de km</div><div style="font-size:11px;color:var(--tx3)" id="runChartSub">—</div></div>
+    <div class="glass-run p-16 mb-14"><div style="position:relative;height:160px"><canvas id="runKmChart" role="img" aria-label="km por salida">km</canvas></div></div>
+    <div class="glass-run p-18 mb-14">
+      <div class="row-between">
+        <div><div class="label" style="margin-bottom:6px">Racha running</div><div class="run-streak-num" id="runStreakNum">—</div><div style="font-size:12px;color:var(--tx2);margin-top:4px">semanas seguidas</div></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;max-width:120px;justify-content:flex-end" id="runStreakDots"></div>
+      </div>
+    </div>
+  </div>
+  <div class="section" id="sec-races">
+    <div class="page-header"><div><div class="page-title">Historial</div><div class="page-sub">Todas las salidas</div></div></div>
+    <div class="run-stat-grid mb-14">
+      <div class="glass-run p-16"><div class="label" style="margin-bottom:6px">Salidas</div><div style="font-size:26px;font-weight:700" id="runTotalRuns">—</div></div>
+      <div class="glass-run p-16"><div class="label" style="margin-bottom:6px">Km acumulados</div><div><span style="font-size:26px;font-weight:700" id="runTotalKm">—</span><span style="font-size:13px;color:var(--tx2)"> km</span></div></div>
+    </div>
+    <div class="glass-run p-16 mb-14">
+      <table class="run-table">
+        <thead><tr><th>Fecha</th><th>Km</th><th>Tiempo</th><th>Pace</th><th>VO2</th></tr></thead>
+        <tbody id="runLogTbody"><tr><td colspan="5"><div class="loading"><i class="ti ti-loader-2"></i></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div><!-- /slides-wrapper -->
+
+<nav class="nav-tabs" id="gymNav">
+  <button class="tab active" id="tab-home" onclick="showGymSection('home')"><i class="ti ti-home"></i>Inicio</button>
+  <button class="tab" id="tab-session" onclick="showGymSection('session')"><i class="ti ti-calendar-event"></i>Sesión</button>
+  <button class="tab" id="tab-stats" onclick="showGymSection('stats')"><i class="ti ti-chart-line"></i>Stats</button>
+</nav>
+<nav class="nav-tabs" id="runNav" style="display:none">
+  <button class="tab run-active" id="tab-run-home" onclick="showRunSection('run-home')"><i class="ti ti-home"></i>Inicio</button>
+  <button class="tab" id="tab-races" onclick="showRunSection('races')"><i class="ti ti-list"></i>Historial</button>
+</nav>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nueva sesión</div><div class="modal-close" onclick="closeAddModal()"><i class="ti ti-x"></i></div></div>
+    <div class="fl"><label class="fl-label">Fecha</label><input type="date" class="fi" id="addFecha"></div>
+    <div class="frow" style="margin-bottom:14px">
+      <div class="fl" style="margin-bottom:0"><label class="fl-label">Grupo muscular</label><select class="fi" id="addGrupo"><option value="">Selecciona...</option></select></div>
+      <div class="fl" style="margin-bottom:0"><label class="fl-label">Peso corporal kg</label><input type="text" class="fi" id="addPesoCorp" placeholder="84.6"></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--tx2)">Ejercicios</div>
+    <div id="exerciseEntries"></div>
+    <button class="btn-add-ex" onclick="addExEntry('exerciseEntries','modal')"><i class="ti ti-plus" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Añadir ejercicio</button>
+    <button class="btn-sub" id="btnSaveSession" onclick="saveSession('modal')"><i class="ti ti-device-floppy" style="font-size:14px;vertical-align:-2px;margin-right:5px"></i>Guardar sesión</button>
+    <div class="save-st" id="saveStatus"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Ajustes</div><div class="modal-close" onclick="closeSettings()"><i class="ti ti-x"></i></div></div>
+    <div class="frow"><div class="fl"><label class="fl-label">Nombre</label><input type="text" class="fi" id="setNombre" placeholder="Horacio"></div><div class="fl"><label class="fl-label">Edad</label><input type="number" class="fi" id="setEdad" placeholder="28"></div></div>
+    <div class="frow"><div class="fl"><label class="fl-label">Peso (kg)</label><input type="number" class="fi" id="setPeso" placeholder="84.6" step="0.1"></div><div class="fl"><label class="fl-label">Talla (cm)</label><input type="number" class="fi" id="setTalla" placeholder="180"></div></div>
+    <div class="frow"><div class="fl"><label class="fl-label">% Grasa corporal</label><input type="number" class="fi" id="setGrasa" placeholder="18" step="0.1"></div><div class="fl"><label class="fl-label">VO2 Max</label><input type="number" class="fi" id="setVO2" placeholder="48"></div></div>
+    <button class="btn-sub" onclick="saveSettings()"><i class="ti ti-check" style="font-size:14px;vertical-align:-2px;margin-right:5px"></i>Guardar ajustes</button>
+    <div class="save-st" id="settingsStatus"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const SU='https://jhtzbtxmxcptlbuyputk.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpodHpidHhteGNwdGxidXlwdXRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTg5OTAsImV4cCI6MjA5NTU3NDk5MH0.JvjeWQPtt_kx7nlv5BRCsOzsQ4YDw22Y6u_AvoqJYIo';
+const SH={'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'};
+async function sbGet(t,p){try{const q=new URLSearchParams(p||{});const r=await fetch(SU+'/rest/v1/'+t+'?'+q,{headers:SH});if(!r.ok)return[];return r.json();}catch(e){return[]}}
+async function sbPost(t,b){try{const r=await fetch(SU+'/rest/v1/'+t,{method:'POST',headers:{...SH,'Prefer':'return=minimal'},body:JSON.stringify(b)});return r.ok;}catch(e){return false}}
+
+let allE=[],allR=[],statsDone=false,prChartInst=null;
+let prof={nombre:'',edad:'',peso:'',talla:'',grasa:'',vo2:''};
+let grupos=[],ejerciciosByGrupo={};
+
+const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const DAYS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function fmt(iso){const[y,m,d]=iso.split('-');return d+' '+MONTHS[+m-1]+' '+y}
+function dn(iso){return DAYS_ES[new Date(iso+'T12:00:00').getDay()]}
+function pw(s){if(!s)return null;const n=parseFloat(s);return isNaN(n)?null:n}
+function wStart(iso){const d=new Date(iso+'T12:00:00'),day=d.getDay();const m=new Date(d);m.setDate(d.getDate()+(day===0?-6:1-day));return m.toISOString().slice(0,10)}
+function addD(iso,n){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+
+function calcStreaks(data){
+  const weeks=[...new Set(data.map(r=>wStart(r.fecha)))].sort();
+  if(!weeks.length)return{current:0,last:0,best:0};
+  let runs=[],cur=1;
+  for(let i=1;i<weeks.length;i++){
+    const diff=Math.round((new Date(weeks[i]+'T12:00:00')-new Date(weeks[i-1]+'T12:00:00'))/(7*24*3600*1000));
+    if(diff===1)cur++;else{runs.push(cur);cur=1;}
+  }
+  runs.push(cur);
+  const best=Math.max(...runs);
+  const tw=wStart(new Date().toISOString().slice(0,10));
+  const lw=addD(tw,-7);
+  const last=weeks[weeks.length-1];
+  const active=last===tw||last===lw;
+  const cs=active?runs[runs.length-1]:0;
+  const ls=runs.length>1?runs[runs.length-(active?2:1)]:0;
+  return{current:cs,last:ls,best};
+}
+
+function buildRunDots(id,filled,total){
+  const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+  for(let i=0;i<total;i++){const d=document.createElement('div');d.className='run-streak-dot'+(i<filled-1?' done':i===filled-1?' current':'');el.appendChild(d);}
+}
+
+/* THEME */
+let dark=true;
+function toggleTheme(){dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'light');document.getElementById('themeIcon').className=dark?'ti ti-sun':'ti ti-moon';}
+
+/* MODE */
+function setMode(m){
+  const run=m==='run';
+  document.getElementById('slidesWrapper').classList.toggle('run-mode',run);
+  document.getElementById('gymNav').style.display=run?'none':'flex';
+  document.getElementById('runNav').style.display=run?'flex':'none';
+  document.getElementById('runNav').classList.toggle('run-mode',run);
+  document.getElementById('btnGym').className='mode-btn'+(run?'':' active');
+  document.getElementById('btnRun').className='mode-btn'+(run?' run-active':'');
+  document.body.style.background=run?'var(--run-bg)':'var(--bg)';
+}
+function showGymSection(n){
+  ['home','session','stats'].forEach(s=>{document.getElementById('sec-'+s).classList.toggle('visible',s===n);document.getElementById('tab-'+s).classList.toggle('active',s===n);});
+  if(n==='stats')renderStats();
+}
+function showRunSection(n){
+  ['run-home','races'].forEach(s=>document.getElementById('sec-'+s).classList.toggle('visible',s===n));
+  document.getElementById('tab-run-home').classList.toggle('run-active',n==='run-home');
+  document.getElementById('tab-races').classList.toggle('run-active',n==='races');
+}
+
+/* SESSION TABLE */
+function buildSesTable(exs){
+  let rows='';
+  exs.forEach(ex=>{
+    const reps=(ex.repeticiones||'—').replace(/;/g,' · ');
+    rows+=`<tr>
+      <td><div class="ex-name">${ex.ejercicio}</div><div class="ex-group">${ex.grupo_muscular}</div></td>
+      <td><span class="peso-badge">${ex.peso||'BW'}</span></td>
+      <td>${ex.series||'—'}</td>
+      <td style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:10px;color:var(--tx2);text-align:center;padding:9px 6px">${reps}</td>
+      <td><span class="total-badge">${ex.total_repeticiones||'—'}</span></td>
+    </tr>`;
+  });
+  return`<div class="ses-card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:16px"><table class="ses-table" style="width:100%;min-width:360px;border-collapse:collapse">
+    <colgroup><col style="width:auto"><col style="width:72px"><col style="width:28px"><col style="white-space:nowrap;width:auto"><col style="width:44px"></colgroup>
+    <thead><tr><th>Ejercicio</th><th>Peso</th><th>S.</th><th>Reps</th><th>Tot.</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div></div>`;
+}
+
+/* WEIGHT HERO */
+function renderWeightHero(){
+  const withW=allE.filter(r=>pw(r.peso_corporal));
+  const latW=withW.length?pw(withW[0].peso_corporal):null;
+  const oldW=withW.length>1?pw(withW[withW.length-1].peso_corporal):null;
+  const talla=prof.talla?+prof.talla:180;
+  const grasa=prof.grasa?+prof.grasa:null;
+  if(!latW){document.getElementById('weightHero').innerHTML='<div class="empty">Sin peso registrado — configura en ajustes</div>';return;}
+  const delta=oldW?(latW-oldW).toFixed(1):null;
+  const dc=delta&&+delta<0?'#34d399':'#f87171';
+  const di=delta&&+delta<0?'ti-trending-down':'ti-trending-up';
+  const imc=(latW/(talla/100*talla/100)).toFixed(1);
+  const masaMusc=grasa?(latW*(1-grasa/100)).toFixed(1):null;
+  document.getElementById('weightHero').innerHTML=`
+    <div><div style="margin-bottom:4px"><span style="font-size:48px;font-weight:700;letter-spacing:-2px;color:var(--tx)">${latW.toFixed(1)}</span><span style="font-size:18px;color:var(--tx2)"> kg</span></div>
+    <div class="label">Peso corporal · ${fmt(withW[0].fecha)}</div>
+    ${delta?`<div style="margin-top:8px;display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);border:.5px solid rgba(16,185,129,.2);border-radius:20px;padding:3px 10px"><i class="ti ${di}" style="font-size:12px;color:${dc}"></i><span style="font-size:12px;color:${dc}">${+delta>0?'+':''}${delta} kg total</span></div>`:''}</div>
+    <div class="metrics-row">
+      <div class="metric-item"><div><span class="metric-val">${talla}</span><span class="metric-unit">cm</span></div><div class="metric-label">Talla</div></div>
+      <div class="metric-item"><div><span class="metric-val">${imc}</span></div><div class="metric-label">IMC</div></div>
+      <div class="metric-item"><div><span class="metric-val">${grasa?grasa+'%':'—'}</span></div><div class="metric-label">Grasa</div></div>
+      <div class="metric-item"><div><span class="metric-val">${masaMusc||'—'}</span><span class="metric-unit">${masaMusc?'kg':''}</span></div><div class="metric-label">Masa musc.</div></div>
+    </div>`;
+}
+
+/* HOME */
+function renderHome(){
+  const data=allE;
+  if(!data.length){document.getElementById('weightHero').innerHTML='<div class="empty">Sin datos</div>';return;}
+  document.getElementById('homeSubtitle').textContent='Última sesión: '+fmt(data[0].fecha);
+  renderWeightHero();
+  const tw=wStart(new Date().toISOString().slice(0,10));
+  const twS=[...new Set(data.map(r=>r.fecha))].filter(d=>wStart(d)===tw).length;
+  document.getElementById('statSessions').textContent=twS;
+  document.getElementById('progSessions').style.width=Math.min(twS/5*100,100)+'%';
+  const st=calcStreaks(data);
+  document.getElementById('homeRachaAct').textContent=st.current;
+  document.getElementById('homeRachaUlt').textContent=st.last;
+  document.getElementById('homeRachaMej').textContent=st.best;
+  const ld=data[0].fecha;
+  const lexs=data.filter(r=>r.fecha===ld);
+  const grps=[...new Set(lexs.map(r=>r.grupo_muscular))];
+  document.getElementById('lastSessionDate').textContent=dn(ld)+' · '+fmt(ld);
+  document.getElementById('lastSessionCard').innerHTML=`
+    <div class="row-between mb-14"><div style="font-size:15px;font-weight:600">${grps.join(' + ')}</div><span style="font-size:11px;background:rgba(37,99,235,.2);color:var(--blue2);padding:3px 10px;border-radius:20px;border:.5px solid rgba(96,165,250,.3)">${lexs.length} ejercicios</span></div>
+    ${buildSesTable(lexs)}`;
+}
+
+/* BUILD METADATA from data */
+function buildMetadata(){
+  grupos=[...new Set(allE.map(r=>r.grupo_muscular))].sort();
+  ejerciciosByGrupo={};
+  allE.forEach(r=>{
+    if(!ejerciciosByGrupo[r.grupo_muscular])ejerciciosByGrupo[r.grupo_muscular]=new Set();
+    ejerciciosByGrupo[r.grupo_muscular].add(r.ejercicio);
+  });
+  // populate all group selects
+  ['addGrupo','iAddGrupo'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Selecciona grupo...</option>';
+    grupos.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});
+    if(cur)sel.value=cur;
+  });
+}
+
+/* SESSION WEEK */
+function buildSessionWeek(){
+  const ld=allE.length?allE[0].fecha:new Date().toISOString().slice(0,10);
+  const mon=wStart(ld);
+  document.getElementById('sessionWeekLabel').textContent='Semana del '+fmt(mon);
+  const sds=new Set(allE.map(r=>r.fecha));
+  const con=document.getElementById('dayRowSession');con.innerHTML='';
+  const names=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let first=null;
+  for(let i=0;i<7;i++){
+    const d=addD(mon,i);const has=sds.has(d);
+    const pill=document.createElement('div');
+    pill.className='day-pill'+(has?' has-data':' empty-day');pill.dataset.date=d;
+    const grp=has?[...new Set(allE.filter(r=>r.fecha===d).map(r=>r.grupo_muscular))][0]:'—';
+    pill.innerHTML=`<span class="dn">${names[i]}</span><span class="dd">${d.slice(5).replace('-','/')}</span><span class="dm">${grp}</span>`;
+    if(has){pill.addEventListener('click',()=>{con.querySelectorAll('.day-pill').forEach(p=>p.classList.remove('active'));pill.classList.add('active');renderSesDetail(d);});if(!first)first=pill;}
+    con.appendChild(pill);
+  }
+  if(first){first.classList.add('active');renderSesDetail(first.dataset.date);}
+  // init inline form
+  document.getElementById('iAddFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('iAddPesoCorp').value='';
+  document.getElementById('iExerciseEntries').innerHTML='';
+  iExCount=0;document.getElementById('iExerciseEntries').innerHTML='';addExEntry('iExerciseEntries','inline');
+}
+
+function renderSesDetail(date){
+  const exs=allE.filter(r=>r.fecha===date);
+  if(!exs.length){document.getElementById('sessionDetail').innerHTML='<div class="glass p-16"><div class="empty">Sin sesión este día</div></div>';return;}
+  const grps=[...new Set(exs.map(r=>r.grupo_muscular))];
+  document.getElementById('sessionDetail').innerHTML=`
+    <div class="glass p-16">
+      <div class="row-between" style="margin-bottom:14px"><div style="font-size:15px;font-weight:600">${dn(date)} · ${fmt(date)}</div><span style="font-size:11px;background:rgba(37,99,235,.2);color:var(--blue2);padding:3px 10px;border-radius:20px;border:.5px solid rgba(96,165,250,.3)">${grps.join(' / ')}</span></div>
+      ${buildSesTable(exs)}
+    </div>`;
+}
+
+/* STATS */
+function renderStats(){
+  if(statsDone)return;statsDone=true;
+  const data=allE;
+  const st=calcStreaks(data);
+  document.getElementById('siCurrent').textContent=st.current;
+  document.getElementById('siLast').textContent=st.last;
+  document.getElementById('siBest').textContent=st.best;
+  document.getElementById('smDias').textContent=[...new Set(data.map(r=>r.fecha))].length;
+  const withW=data.filter(r=>pw(r.peso_corporal));
+  if(withW.length)document.getElementById('smPeso').textContent=pw(withW[0].peso_corporal).toFixed(1);
+  document.getElementById('smTalla').textContent=prof.talla||'—';
+  document.getElementById('smVO2').textContent=prof.vo2||'—';
+  buildHeatmap(data);
+  buildPRSelector(data);
+}
+
+/* HEATMAP — color ramp: purple→red→orange→yellow */
+function hmColor(val){
+  if(!val||val===0)return'rgba(80,80,100,.2)';
+  if(val<200)return'#4c1d95';
+  if(val<500)return'#7c3aed';
+  if(val<800)return'#dc2626';
+  if(val<1000)return'#f97316';
+  return'#fbbf24';
+}
+function buildHeatmap(data){
+  const cellMap={};
+  data.forEach(r=>{
+    const w=wStart(r.fecha);
+    const day=new Date(r.fecha+'T12:00:00').getDay();
+    const k=w+'_'+day;
+    cellMap[k]=(cellMap[k]||0)+(r.total_repeticiones||0);
+  });
+  const allWeeks=[...new Set(data.map(r=>wStart(r.fecha)))].sort().slice(-10);
+  const grid=document.getElementById('heatmapGrid');grid.innerHTML='';
+  ['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(l=>{const el=document.createElement('div');el.className='hm-day-label';el.textContent=l;grid.appendChild(el);});
+  allWeeks.forEach(w=>{
+    const wl=document.createElement('div');wl.className='hm-label';wl.textContent=w.slice(5).replace('-','/');grid.appendChild(wl);
+    [1,2,3,4,5,6,0].forEach(dayIdx=>{
+      const k=w+'_'+dayIdx;const val=cellMap[k]||0;
+      const cell=document.createElement('div');cell.className='hm-cell';
+      cell.style.background=hmColor(val);
+      if(val>0){const dname=DAYS_ES[dayIdx];cell.innerHTML=`<div class="hm-tip">${dname} ${w.slice(5).replace('-','/')}<br>${val} reps</div>`;}
+      grid.appendChild(cell);
+    });
+  });
+}
+
+/* PR CHART */
+let prData={};
+function buildPRSelector(data){
+  prData={};
+  data.forEach(r=>{
+    const g=r.grupo_muscular,e=r.ejercicio,p=pw(r.peso);
+    if(!p)return;
+    if(!prData[g])prData[g]={};
+    if(!prData[g][e]||p>prData[g][e])prData[g][e]=p;
+  });
+  const gs=Object.keys(prData).sort((a,b)=>Object.keys(prData[b]).length-Object.keys(prData[a]).length);
+  const sel=document.getElementById('prSelector');sel.innerHTML='';
+  gs.forEach((g,i)=>{
+    const tag=document.createElement('div');tag.className='pr-tag'+(i===0?' active':'');tag.textContent=g;
+    tag.onclick=()=>{document.querySelectorAll('.pr-tag').forEach(t=>t.classList.remove('active'));tag.classList.add('active');renderPRChart(g);};
+    sel.appendChild(tag);
+  });
+  if(gs.length)renderPRChart(gs[0]);
+}
+
+function renderPRChart(grupo){
+  const exData=prData[grupo]||{};
+  const entries=Object.entries(exData).sort((a,b)=>b[1]-a[1]);
+  const labels=entries.map(e=>e[0]);
+  const vals=entries.map(e=>e[1]);
+  // dynamic height: 36px per bar + 40px padding
+  const h=Math.max(labels.length*38+40,120);
+  document.getElementById('prChartWrap').style.height=h+'px';
+  if(prChartInst){prChartInst.destroy();prChartInst=null;}
+  const maxVal=Math.max(...vals);
+  prChartInst=new Chart(document.getElementById('prChart')||createPRCanvas(),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        data:vals,
+        backgroundColor:vals.map(v=>v===maxVal?'rgba(239,68,68,.65)':'rgba(59,130,246,.4)'),
+        borderColor:vals.map(v=>v===maxVal?'rgba(248,113,113,.85)':'rgba(96,165,250,.65)'),
+        borderWidth:1,borderRadius:6,
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(6,11,24,0.95)',
+          borderColor:'rgba(80,140,255,0.25)',
+          borderWidth:1,
+          titleColor:'#f0f4ff',
+          bodyColor:'#60a5fa',
+          titleFont:{size:11,weight:'600'},
+          bodyFont:{size:13,family:"'DM Mono', monospace"},
+          padding:{top:8,bottom:8,left:12,right:12},
+          cornerRadius:10,
+          displayColors:false,
+          callbacks:{
+            label:c=>' '+c.parsed.x+' kg',
+            title:t=>t[0].label
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#4a6499',font:{size:10},callback:v=>v+' kg'},grid:{color:'rgba(59,130,246,.06)'},border:{display:false}},
+        y:{ticks:{color:'#8ba4d4',font:{size:11},autoSkip:false},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+}
+function createPRCanvas(){
+  const wrap=document.getElementById('prChartWrap');
+  const c=document.createElement('canvas');c.id='prChart';c.setAttribute('role','img');c.setAttribute('aria-label','PRs por ejercicio');
+  wrap.appendChild(c);return c;
+}
+
+/* RUNNING */
+function renderRunning(){
+  const data=allR;
+  if(!data.length){
+    ['runSubtitle','runStreakNum','runTotalRuns','runTotalKm'].forEach(id=>document.getElementById(id).textContent=id==='runSubtitle'?'Sin salidas':'0');
+    document.getElementById('runTopStats').innerHTML='<div class="empty" style="grid-column:1/-1">Sin datos</div>';
+    document.getElementById('runLogTbody').innerHTML='<tr><td colspan="5"><div class="empty">Sin datos</div></td></tr>';
+    return;
+  }
+  document.getElementById('runSubtitle').textContent=data.length+' salidas registradas';
+  const maxD=Math.max(...data.map(r=>+r.distancia));
+  const maxR=data.find(r=>+r.distancia===maxD);
+  const bVO2=Math.max(...data.map(r=>+r.vo2_max).filter(Boolean));
+  function ps(p){if(!p)return 99999;const a=p.split(':');return+a[0]*60+(+a[1]||0)}
+  const bMed=data.map(r=>r.pace_medio).filter(Boolean).reduce((b,p)=>ps(p)<ps(b)?p:b,'99:99');
+  const bFast=data.map(r=>r.pace_faster).filter(Boolean).reduce((b,p)=>ps(p)<ps(b)?p:b,'99:99');
+  document.getElementById('runTopStats').innerHTML=`
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-map-pin" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>Distancia max</div><div><span style="font-size:24px;font-weight:700">${maxD}</span><span style="font-size:13px;color:var(--tx2)"> km</span></div><div class="label" style="margin-top:3px">${fmt(maxR.fecha)}</div></div>
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-heart-rate-monitor" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>VO2 Max</div><div><span style="font-size:24px;font-weight:700">${bVO2||'—'}</span><span style="font-size:13px;color:var(--tx2)"> ml</span></div></div>
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-run" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>Mejor pace</div><div style="font-size:24px;font-weight:700">${bMed==='99:99'?'—':bMed}<span style="font-size:13px;color:var(--tx2)"> /km</span></div></div>
+    <div class="glass-run p-16"><div class="label" style="margin-bottom:6px"><i class="ti ti-bolt" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>Pace más rápido</div><div style="font-size:24px;font-weight:700">${bFast==='99:99'?'—':bFast}<span style="font-size:13px;color:var(--tx2)"> /km</span></div></div>`;
+  const cd=data.slice(0,10).reverse();
+  document.getElementById('runChartSub').textContent='Últimas '+cd.length+' salidas';
+  new Chart(document.getElementById('runKmChart'),{
+    type:'bar',
+    data:{labels:cd.map(r=>r.fecha.slice(5).replace('-','/')),datasets:[{data:cd.map(r=>+r.distancia),backgroundColor:cd.map(r=>+r.distancia>=15?'rgba(239,68,68,.7)':'rgba(239,68,68,.35)'),borderColor:'rgba(248,113,113,.6)',borderWidth:1,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>{const r=cd[c.dataIndex];return[c.parsed.y+' km','Tiempo: '+r.tiempo,'Pace: '+(r.pace_medio||'—')+'/km']}}}},scales:{x:{ticks:{color:'#6b3a3a',font:{size:10},maxRotation:0},grid:{display:false},border:{display:false}},y:{ticks:{color:'#6b3a3a',font:{size:10},callback:v=>v+'k'},grid:{color:'rgba(239,68,68,.06)'},border:{display:false}}}}
+  });
+  const rs=calcStreaks(data);
+  document.getElementById('runStreakNum').textContent=rs.current;
+  buildRunDots('runStreakDots',rs.current,Math.max(rs.current+3,10));
+  document.getElementById('runTotalRuns').textContent=data.length;
+  document.getElementById('runTotalKm').textContent=data.reduce((s,r)=>s+(+r.distancia||0),0).toFixed(1);
+  const tb=document.getElementById('runLogTbody');tb.innerHTML='';
+  data.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td style="color:var(--tx2)">${fmt(r.fecha)}</td><td>${r.distancia}</td><td>${r.tiempo}</td><td style="color:var(--red2)">${r.pace_medio||'—'}</td><td style="color:var(--tx3)">${r.vo2_max||'—'}</td>`;tb.appendChild(tr);});
+}
+
+/* SETTINGS — persisted in localStorage */
+function loadProf(){
+  try{const s=localStorage.getItem('tProf2');if(s){prof=JSON.parse(s);}}catch(e){}
+}
+function saveSettings(){
+  prof={nombre:document.getElementById('setNombre').value.trim(),edad:document.getElementById('setEdad').value.trim(),peso:document.getElementById('setPeso').value.trim(),talla:document.getElementById('setTalla').value.trim(),grasa:document.getElementById('setGrasa').value.trim(),vo2:document.getElementById('setVO2').value.trim()};
+  localStorage.setItem('tProf2',JSON.stringify(prof));
+  document.getElementById('settingsStatus').textContent='✓ Guardado';
+  setTimeout(()=>{closeSettings();applyProf();},600);
+}
+function applyProf(){
+  const n=prof.nombre;const h=new Date().getHours();
+  const g=h<12?'Buenos días':h<18?'Buenas tardes':'Buenas noches';
+  document.getElementById('greetingText').textContent=n?g+', '+n+' 👋':g;
+  if(prof.talla){document.getElementById('smTalla').textContent=prof.talla;}
+  if(prof.vo2){document.getElementById('smVO2').textContent=prof.vo2;}
+  renderWeightHero();
+}
+function openSettings(){
+  document.getElementById('setNombre').value=prof.nombre||'';
+  document.getElementById('setEdad').value=prof.edad||'';
+  document.getElementById('setPeso').value=prof.peso||'';
+  document.getElementById('setTalla').value=prof.talla||'';
+  document.getElementById('setGrasa').value=prof.grasa||'';
+  document.getElementById('setVO2').value=prof.vo2||'';
+  document.getElementById('settingsStatus').textContent='';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('open')}
+
+/* AUTOCOMPLETE */
+function makeAC(input,listId,getSuggestions){
+  const list=document.getElementById(listId);
+  input.addEventListener('input',()=>{
+    const q=input.value.trim().toLowerCase();
+    if(!q){list.classList.remove('open');return;}
+    const suggs=getSuggestions().filter(s=>s.toLowerCase().includes(q)).slice(0,8);
+    if(!suggs.length){list.classList.remove('open');return;}
+    list.innerHTML='';
+    suggs.forEach(s=>{const item=document.createElement('div');item.className='ac-item';item.textContent=s;item.onmousedown=()=>{input.value=s;list.classList.remove('open');input.dispatchEvent(new Event('change'));};list.appendChild(item);});
+    list.classList.add('open');
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>list.classList.remove('open'),150));
+}
+
+/* SERIES → REP INPUTS */
+function buildRepInputs(seriesVal,container,totalId){
+  const n=parseInt(seriesVal)||0;
+  container.innerHTML='';
+  if(n<=0)return;
+  const wrap=document.createElement('div');wrap.className='reps-inputs';
+  for(let i=0;i<n;i++){
+    const inp=document.createElement('input');
+    inp.type='number';inp.className='rep-input';inp.placeholder='Rep '+(i+1);inp.min=0;inp.dataset.idx=i;
+    inp.addEventListener('input',()=>updateTotal(container,totalId));
+    wrap.appendChild(inp);
+  }
+  container.appendChild(wrap);
+  const totRow=document.createElement('div');totRow.className='total-row';totRow.innerHTML='Total: <span id="'+totalId+'">0</span> reps';
+  container.appendChild(totRow);
+}
+function updateTotal(container,totalId){
+  const inputs=container.querySelectorAll('.rep-input');
+  const sum=[...inputs].reduce((s,i)=>s+(parseInt(i.value)||0),0);
+  const el=container.querySelector('#'+totalId)||document.getElementById(totalId);
+  if(el)el.textContent=sum;
+}
+function getRepString(container){
+  return[...container.querySelectorAll('.rep-input')].map(i=>i.value||'0').join(';');
+}
+function getRepTotal(container){
+  return[...container.querySelectorAll('.rep-input')].reduce((s,i)=>s+(parseInt(i.value)||0),0);
+}
+
+/* EXERCISE ENTRY BUILDER */
+let exCount=0,iExCount=0;
+function addExEntry(containerId,scope){
+  const isModal=scope==='modal';const isInline=scope==='inline';
+  if(isModal)exCount++;else iExCount++;
+  const uid=(isModal?'ex':'iex')+(isModal?exCount:iExCount);
+  const repContId='rc_'+uid;const totId='tot_'+uid;const acListId='ac_'+uid;
+  const div=document.createElement('div');div.className='ex-entry';div.id=uid;
+  const isInlineScope=!isModal;const rmBtn=(isModal&&exCount>1)||(isInlineScope&&iExCount>1)?`<button class="btn-rmex" onclick="document.getElementById('${uid}').remove()"><i class="ti ti-x"></i></button>`:'';
+  div.innerHTML=`${rmBtn}
+    <div class="fl" style="margin-bottom:8px">
+      <label class="fl-label">Ejercicio</label>
+      <div class="ac-wrap">
+        <input type="text" class="fi" placeholder="Nombre del ejercicio..." data-field="ejercicio" id="inp_${uid}" autocomplete="off">
+        <div class="ac-list" id="${acListId}"></div>
+      </div>
+    </div>
+    <div class="fl" style="margin-bottom:8px">
+      <label class="fl-label">Series</label>
+      <select class="fi" data-field="series" id="sel_${uid}" style="width:50%">
+        <option value="">—</option>
+        <option value="1">1 serie</option>
+        <option value="2">2 series</option>
+        <option value="3">3 series</option>
+        <option value="4">4 series</option>
+        <option value="5">5 series</option>
+      </select>
+    </div>
+    <div class="fl" style="margin-bottom:8px">
+      <label class="fl-label">Repeticiones por serie</label>
+      <div id="${repContId}"></div>
+    </div>
+    <div><label class="fl-label">Peso</label><input type="text" class="fi" placeholder="80 kg" data-field="peso" style="width:50%"></div>`;
+  document.getElementById(containerId).appendChild(div);
+
+  // wire series select
+  const sel=div.querySelector('#sel_'+uid);
+  const repCont=div.querySelector('#'+repContId);
+  sel.addEventListener('change',()=>buildRepInputs(sel.value,repCont,totId));
+
+  // wire autocomplete — suggestions depend on selected group
+  const grupoSel=isModal?document.getElementById('addGrupo'):document.getElementById('iAddGrupo');
+  makeAC(div.querySelector('#inp_'+uid),acListId,()=>{
+    const g=grupoSel?grupoSel.value:'';
+    const byGrupo=g&&ejerciciosByGrupo[g]?[...ejerciciosByGrupo[g]]:[];
+    const all=[...new Set(allE.map(r=>r.ejercicio))];
+    return byGrupo.length?byGrupo:all;
+  });
+}
+
+/* SAVE SESSION (shared) */
+async function saveSession(scope){
+  const isModal=scope==='modal';const isInline=scope==='inline';
+  const fechaId=isModal?'addFecha':'iAddFecha';
+  const grupoId=isModal?'addGrupo':'iAddGrupo';
+  const pesoCId=isModal?'addPesoCorp':'iAddPesoCorp';
+  const entriesId=isModal?'exerciseEntries':'iExerciseEntries';
+  const statusId=isModal?'saveStatus':'iSaveStatus';
+  const btnId=isModal?'btnSaveSession':'iBtnSave';
+  const fecha=document.getElementById(fechaId).value;
+  const grupo=document.getElementById(grupoId).value;
+  const pesoCorp=document.getElementById(pesoCId).value.trim();
+  if(!fecha||!grupo){document.getElementById(statusId).textContent='Completa fecha y grupo';return;}
+  const rows=[];
+  document.querySelectorAll('#'+entriesId+' .ex-entry').forEach(e=>{
+    const nombre=e.querySelector('[data-field="ejercicio"]').value.trim();
+    if(!nombre)return;
+    const seriesEl=e.querySelector('[data-field="series"]');
+    const series=parseInt(seriesEl?seriesEl.value:0)||null;
+    const pesoEl=e.querySelector('[data-field="peso"]');
+    const peso=pesoEl?pesoEl.value.trim():null;
+    const repCont=e.querySelector('[id^="rc_"]');
+    const repStr=repCont?getRepString(repCont):'';
+    const repTot=repCont?getRepTotal(repCont):null;
+    rows.push({fecha,grupo_muscular:grupo,ejercicio:nombre,peso:peso||null,series,repeticiones:repStr||null,total_repeticiones:repTot||null,peso_corporal:pesoCorp||null,notas:null});
+  });
+  if(!rows.length){document.getElementById(statusId).textContent='Añade al menos un ejercicio';return;}
+  const btn=document.getElementById(btnId);btn.disabled=true;
+  document.getElementById(statusId).textContent='Guardando...';
+  const ok=await sbPost('entrenamientos',rows);
+  if(ok){
+    document.getElementById(statusId).textContent='✓ Sesión guardada';
+    setTimeout(async()=>{
+      if(isModal)closeAddModal();
+      allE=await sbGet('entrenamientos',{order:'fecha.desc,created_at.desc',select:'*'});
+      buildMetadata();statsDone=false;renderHome();buildSessionWeek();
+      document.getElementById(statusId).textContent='';
+    },700);
+  }else{document.getElementById(statusId).textContent='Error. Intenta de nuevo.';}
+  btn.disabled=false;
+}
+
+/* MODAL OPEN/CLOSE */
+function openAddModal(){
+  document.getElementById('addFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('addGrupo').value='';document.getElementById('addPesoCorp').value='';
+  document.getElementById('exerciseEntries').innerHTML='';document.getElementById('saveStatus').textContent='';
+  exCount=0;addExEntry('exerciseEntries','modal');
+  document.getElementById('addModal').classList.add('open');
+}
+function closeAddModal(){document.getElementById('addModal').classList.remove('open')}
+
+/* INIT */
+async function init(){
+  loadProf();applyProf();
+  const[e,r]=await Promise.all([
+    sbGet('entrenamientos',{order:'fecha.desc,created_at.desc',select:'*'}),
+    sbGet('running',{order:'fecha.desc',select:'*'})
+  ]);
+  allE=e||[];
+  const seen=new Set();
+  allR=(r||[]).filter(x=>{const k=x.fecha+'|'+x.distancia;if(seen.has(k))return false;seen.add(k);return true;});
+  buildMetadata();
+  renderHome();buildSessionWeek();renderRunning();
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
